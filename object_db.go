@@ -51,7 +51,7 @@ func FromFilesystem(root string) (*ObjectDatabase, error) {
 // If Close() has already been called, this function will panic().
 func (o *ObjectDatabase) Close() error {
 	if !atomic.CompareAndSwapUint32(&o.closed, 0, 1) {
-		panic("git/odb: *ObjectDatabase already closed")
+		return fmt.Errorf("git/odb: *ObjectDatabase already closed")
 	}
 
 	if err := o.objectScanner.Close(); err != nil {
@@ -197,7 +197,7 @@ func (o *ObjectDatabase) open(sha []byte) (*ObjectReader, error) {
 		// load its contents from the *git.ObjectScanner by leveraging
 		// `git-cat-file --batch`.
 		if atomic.LoadUint32(&o.closed) == 1 {
-			panic("git/odb: cannot use closed *git.ObjectScanner")
+			return nil, fmt.Errorf("git/odb: cannot use closed *git.ObjectScanner")
 		}
 
 		if !o.objectScanner.Scan(hex.EncodeToString(sha)) {
