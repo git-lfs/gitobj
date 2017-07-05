@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/git-lfs/git-lfs/lfs"
 )
 
 // fileStorer implements the storer interface by writing to the .git/objects
@@ -54,7 +56,7 @@ func (fs *fileStorer) Store(sha []byte, r io.Reader) (n int64, err error) {
 		return 0, nil
 	}
 
-	tmp, err := ioutil.TempFile("", "")
+	tmp, err := lfs.TempFile("")
 	if err != nil {
 		return 0, err
 	}
