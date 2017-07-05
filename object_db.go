@@ -5,12 +5,12 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 	"sync/atomic"
 
 	"github.com/git-lfs/git-lfs/git"
+	"github.com/git-lfs/git-lfs/lfs"
 )
 
 // ObjectDatabase enables the reading and writing of objects against a storage
@@ -95,7 +95,7 @@ func (o *ObjectDatabase) Commit(sha []byte) (*Commit, error) {
 // WriteBlob stores a *Blob on disk and returns the SHA it is uniquely
 // identified by, or an error if one was encountered.
 func (o *ObjectDatabase) WriteBlob(b *Blob) ([]byte, error) {
-	buf, err := ioutil.TempFile("", "")
+	buf, err := lfs.TempFile("")
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +163,7 @@ func (d *ObjectDatabase) encodeBuffer(object Object, buf io.ReadWriter) (sha []b
 		return nil, 0, err
 	}
 
-	tmp, err := ioutil.TempFile("", "")
+	tmp, err := lfs.TempFile("")
 	if err != nil {
 		return nil, 0, err
 	}
