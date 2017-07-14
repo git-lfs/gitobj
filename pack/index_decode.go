@@ -15,6 +15,8 @@ const (
 	VersionWidth = 4
 	// V2Width is the total width of the header in V2.
 	V2Width = MagicWidth + VersionWidth
+	// V1Width is the total width of the header in V1.
+	V1Width = 0
 
 	// FanoutEntries is the number of entries in the fanout table.
 	FanoutEntries = 256
