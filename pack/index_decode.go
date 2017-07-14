@@ -25,6 +25,9 @@ const (
 	// FanoutWidth is the width of the entire fanout table.
 	FanoutWidth = FanoutEntries * FanoutEntryWidth
 
+	// OffsetV1Start is the location of the first object outside of the V1
+	// header.
+	OffsetV1Start = V1Width + FanoutWidth
 	// OffsetV2Start is the location of the first object outside of the V2
 	// header.
 	OffsetV2Start = V2Width + FanoutWidth
@@ -41,6 +44,8 @@ const (
 	// encoded into the small offset.
 	ObjectLargeOffsetWidth = 8
 
+	// ObjectEntryV1Width is the width of one contiguous object entry in V1.
+	ObjectEntryV1Width = ObjectNameWidth + ObjectSmallOffsetWidth
 	// ObjectEntryV2Width is the width of one non-contiguous object entry in
 	// V2.
 	ObjectEntryV2Width = ObjectNameWidth + ObjectCRCWidth + ObjectSmallOffsetWidth
@@ -96,13 +101,14 @@ func decodeIndexHeader(r io.ReaderAt) (IndexVersion, error) {
 
 		version := IndexVersion(binary.BigEndian.Uint32(vb))
 		switch version {
+		case V1:
+			return version, nil
 		case V2:
 			return version, nil
 		}
-
 		return version, &UnsupportedVersionErr{uint32(version)}
 	}
-	return IndexVersion(0), nil
+	return V1, nil
 }
 
 // decodeIndexFanout decodes the fanout table given by "r" and beginning at the
