@@ -9,14 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDecodeIndexV1(t *testing.T) {
-	idx, err := DecodeIndex(bytes.NewReader(make([]byte, FanoutWidth)))
-
-	assert.NoError(t, err)
-	assert.Equal(t, V1, idx.version)
-	assert.EqualValues(t, 0, idx.Count())
-}
-
 func TestDecodeIndexV1InvalidFanout(t *testing.T) {
 	idx, err := DecodeIndex(bytes.NewReader(make([]byte, FanoutWidth-1)))
 
@@ -53,6 +45,14 @@ func TestDecodeIndexV2InvalidFanout(t *testing.T) {
 
 	assert.Equal(t, ErrShortFanout, err)
 	assert.Nil(t, idx)
+}
+
+func TestDecodeIndexV1(t *testing.T) {
+	idx, err := DecodeIndex(bytes.NewReader(make([]byte, FanoutWidth)))
+
+	assert.NoError(t, err)
+	assert.Equal(t, V1, idx.version)
+	assert.EqualValues(t, 0, idx.Count())
 }
 
 func TestDecodeIndexUnsupportedVersion(t *testing.T) {
