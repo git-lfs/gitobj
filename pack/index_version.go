@@ -18,10 +18,10 @@ const (
 // Width returns the width of the header given in the respective version.
 func (v IndexVersion) Width() int64 {
 	switch v {
-	case V1:
-		return V1Width
 	case V2:
-		return V2Width
+		return indexV2Width
+	case V1:
+		return indexV1Width
 	}
 	panic(fmt.Sprintf("git/odb/pack: width unknown for pack version %d", v))
 }
