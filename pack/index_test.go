@@ -49,7 +49,7 @@ func TestIndexSearchOutOfBounds(t *testing.T) {
 		0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	})
 
-	assert.NoError(t, err)
+	assert.True(t, IsNotFound(err), "expected err to be 'not found'")
 	assert.Nil(t, e)
 }
 
@@ -59,7 +59,7 @@ func TestIndexEntryNotFound(t *testing.T) {
 		0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6,
 	})
 
-	assert.NoError(t, err)
+	assert.True(t, IsNotFound(err), "expected err to be 'not found'")
 	assert.Nil(t, e)
 }
 
