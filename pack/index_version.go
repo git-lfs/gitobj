@@ -1,7 +1,6 @@
 package pack
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -29,7 +28,7 @@ func (v IndexVersion) Width() int64 {
 var (
 	// ErrIndexOutOfBounds is an error returned when the object lookup "at"
 	// (see: Search() below) is out of bounds.
-	ErrIndexOutOfBounds = errors.New("git/odb/pack: index is out of bounds")
+	ErrIndexOutOfBounds = fmt.Errorf("git/odb/pack: index is out of bounds")
 )
 
 // Search searches index "idx" for an object given by "name" at location "at".
