@@ -1,8 +1,10 @@
 package pack
 
 import (
+	"compress/zlib"
 	"fmt"
 	"io"
+	"io/ioutil"
 )
 
 // Packfile encapsulates the behavior of accessing an unpacked representation of
@@ -123,8 +125,19 @@ func (p *Packfile) find(offset int64) (Chain, error) {
 
 		// Now load the delta to apply to the base, given at the offset
 		// "offset" and for length "size".
-		delta := make([]byte, size)
-		if _, err := p.r.ReadAt(delta, offset); err != nil {
+		//
+		// NB: The delta instructions are zlib compressed, so ensure
+		// that we uncompress the instructions first.
+		zr, err := zlib.NewReader(&OffsetReaderAt{
+			o: offset,
+			r: p.r,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		delta, err := ioutil.ReadAll(zr)
+		if err != nil {
 			return nil, err
 		}
 
