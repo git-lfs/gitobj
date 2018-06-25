@@ -2,7 +2,9 @@ package gitobj
 
 import (
 	"bytes"
+	"fmt"
 	"io"
+	"os"
 )
 
 // Blob represents a Git object of type "blob".
@@ -25,6 +27,43 @@ func NewBlobFromBytes(contents []byte) *Blob {
 		Contents: bytes.NewReader(contents),
 		Size:     int64(len(contents)),
 	}
+}
+
+// NewBlobFromFile returns a new *Blob that contains the contents of the file
+// at location "path" on disk. NewBlobFromFile does not read the file ahead of
+// time, and instead defers this task until encoding the blob to the object
+// database.
+//
+// If the file cannot be opened or stat(1)-ed, an error will be returned.
+//
+// When the blob receives a function call Close(), the file will also be closed,
+// and any error encountered in doing so will be returned from Close().
+func NewBlobFromFile(path string) (*Blob, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("git/odb: could not open: %s: %s", path,
+			err)
+	}
+
+	stat, err := f.Stat()
+	if err != nil {
+		return nil, fmt.Errorf("git/odb: could not stat %s: %s", path,
+			err)
+	}
+
+	return &Blob{
+		Contents: f,
+		Size:     stat.Size(),
+
+		closeFn: func() error {
+			if err := f.Close(); err != nil {
+				return fmt.Errorf(
+					"git/odb: could not close %s: %s",
+					path, err)
+			}
+			return nil
+		},
+	}, nil
 }
 
 // Type implements Object.ObjectType by returning the correct object type for
