@@ -1,0 +1,7 @@
+language: go
+go:
+  - 1.8.3
+  - 1.10.x
+  - master
+notifications:
+  email: false
