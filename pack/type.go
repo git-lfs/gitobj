@@ -29,7 +29,7 @@ const (
 )
 
 // String implements fmt.Stringer and returns an encoding of the type valid for
-// use in the loose object format protocol (see: package 'git/odb' for more).
+// use in the loose object format protocol (see: package 'gitobj' for more).
 //
 // If the receiving instance is not defined, String() will panic().
 func (t PackedObjectType) String() string {
@@ -50,9 +50,9 @@ func (t PackedObjectType) String() string {
 		return "obj_ref_delta"
 	}
 
-	panic(fmt.Sprintf("git/odb/pack: unknown object type: %d", t))
+	panic(fmt.Sprintf("gitobj/pack: unknown object type: %d", t))
 }
 
 var (
-	errUnrecognizedObjectType = errors.New("git/odb/pack: unrecognized object type")
+	errUnrecognizedObjectType = errors.New("gitobj/pack: unrecognized object type")
 )

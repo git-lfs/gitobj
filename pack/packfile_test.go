@@ -183,7 +183,7 @@ func TestPackfileClosesReadClosers(t *testing.T) {
 }
 
 func TestPackfileClosePropogatesCloseErrors(t *testing.T) {
-	e := fmt.Errorf("git/odb/pack: testing")
+	e := fmt.Errorf("gitobj/pack: testing")
 	p := &Packfile{
 		r: &ReaderAtCloser{E: e},
 	}
@@ -268,7 +268,7 @@ func IndexWith(offsets map[string]uint32) *Index {
 func DecodeHex(t *testing.T, str string) []byte {
 	b, err := hex.DecodeString(str)
 	if err != nil {
-		t.Fatalf("git/odb/pack: unexpected hex.DecodeString error: %s", err)
+		t.Fatalf("gitobj/pack: unexpected hex.DecodeString error: %s", err)
 	}
 
 	return b

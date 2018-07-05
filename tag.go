@@ -43,14 +43,14 @@ func (t *Tag) Decode(r io.Reader, size int64) (int, error) {
 
 			parts := strings.SplitN(scanner.Text(), " ", 2)
 			if len(parts) < 2 {
-				return 0, fmt.Errorf("git/odb: invalid tag header: %s", scanner.Text())
+				return 0, fmt.Errorf("gitobj: invalid tag header: %s", scanner.Text())
 			}
 
 			switch parts[0] {
 			case "object":
 				sha, err := hex.DecodeString(parts[1])
 				if err != nil {
-					return 0, fmt.Errorf("git/odb: unable to decode SHA-1: %s", err)
+					return 0, fmt.Errorf("gitobj: unable to decode SHA-1: %s", err)
 				}
 
 				t.Object = sha
@@ -61,7 +61,7 @@ func (t *Tag) Decode(r io.Reader, size int64) (int, error) {
 			case "tagger":
 				t.Tagger = parts[1]
 			default:
-				return 0, fmt.Errorf("git/odb: unknown tag header: %s", parts[0])
+				return 0, fmt.Errorf("gitobj: unknown tag header: %s", parts[0])
 			}
 		}
 	}

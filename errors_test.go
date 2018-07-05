@@ -11,5 +11,5 @@ func TestUnexpectedObjectTypeErrFormatting(t *testing.T) {
 		Got: TreeObjectType, Wanted: BlobObjectType,
 	}
 
-	assert.Equal(t, "git/odb: unexpected object type, got: \"tree\", wanted: \"blob\"", err.Error())
+	assert.Equal(t, "gitobj: unexpected object type, got: \"tree\", wanted: \"blob\"", err.Error())
 }

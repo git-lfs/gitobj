@@ -31,7 +31,7 @@ func TestOffsetReaderAtReadsAtOffset(t *testing.T) {
 }
 
 func TestOffsetReaderPropogatesErrors(t *testing.T) {
-	expected := fmt.Errorf("git/odb/pack: testing")
+	expected := fmt.Errorf("gitobj/pack: testing")
 	bo := &OffsetReaderAt{
 		r: &ErrReaderAt{Err: expected},
 		o: 1,

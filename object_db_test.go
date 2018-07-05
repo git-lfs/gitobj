@@ -226,7 +226,7 @@ func TestReadingAMissingObjectAfterClose(t *testing.T) {
 	}
 
 	blob, err := db.Blob(sha)
-	assert.EqualError(t, err, "git/odb: cannot use closed *pack.Set")
+	assert.EqualError(t, err, "gitobj: cannot use closed *pack.Set")
 	assert.Nil(t, blob)
 }
 
@@ -235,7 +235,7 @@ func TestClosingAnObjectDatabaseMoreThanOnce(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Nil(t, db.Close())
-	assert.EqualError(t, db.Close(), "git/odb: *ObjectDatabase already closed")
+	assert.EqualError(t, db.Close(), "gitobj: *ObjectDatabase already closed")
 }
 
 func TestObjectDatabaseRootWithRoot(t *testing.T) {

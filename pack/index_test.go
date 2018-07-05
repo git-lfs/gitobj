@@ -80,7 +80,7 @@ func TestIndexIsNotFound(t *testing.T) {
 }
 
 func TestIndexIsNotFoundForOtherErrors(t *testing.T) {
-	assert.False(t, IsNotFound(fmt.Errorf("git/odb/pack: misc")),
+	assert.False(t, IsNotFound(fmt.Errorf("gitobj/pack: misc")),
 		"expected 'err' not to satisfy 'IsNotFound()'")
 }
 

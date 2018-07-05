@@ -60,7 +60,7 @@ func TestDecodeIndexUnsupportedVersion(t *testing.T) {
 
 	idx, err := DecodeIndex(bytes.NewReader(buf))
 
-	assert.EqualError(t, err, "git/odb/pack: unsupported version: 3")
+	assert.EqualError(t, err, "gitobj/pack: unsupported version: 3")
 	assert.Nil(t, idx)
 }
 

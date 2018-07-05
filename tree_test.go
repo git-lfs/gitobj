@@ -173,7 +173,7 @@ func (c *TreeEntryTypeTestCase) Assert(t *testing.T) {
 	got := e.Type()
 
 	assert.Equal(t, c.Expected, got,
-		"git/odb: expected type: %s, got: %s", c.Expected, got)
+		"gitobj: expected type: %s, got: %s", c.Expected, got)
 }
 
 func TestTreeEntryTypeResolution(t *testing.T) {
@@ -192,9 +192,9 @@ func TestTreeEntryTypeResolutionUnknown(t *testing.T) {
 
 	defer func() {
 		if err := recover(); err == nil {
-			t.Fatal("git/odb: expected panic(), got none")
+			t.Fatal("gitobj: expected panic(), got none")
 		} else {
-			assert.Equal(t, "git/odb: unknown object type: -1", err)
+			assert.Equal(t, "gitobj: unknown object type: -1", err)
 		}
 	}()
 

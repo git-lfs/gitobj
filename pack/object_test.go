@@ -31,7 +31,7 @@ func TestObjectUnpackUnpacksData(t *testing.T) {
 }
 
 func TestObjectUnpackPropogatesErrors(t *testing.T) {
-	expected := fmt.Errorf("git/odb/pack: testing")
+	expected := fmt.Errorf("gitobj/pack: testing")
 
 	o := &Object{
 		data: &ChainSimple{

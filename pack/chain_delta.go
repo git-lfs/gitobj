@@ -47,7 +47,7 @@ func patch(base, delta []byte) ([]byte, error) {
 		//
 		// If this does not match with the srcSize, return an error
 		// early so as to avoid a possible bounds error below.
-		return nil, fmt.Errorf("git/odb/pack: invalid delta data")
+		return nil, fmt.Errorf("gitobj/pack: invalid delta data")
 	}
 
 	// The remainder of the delta header contains the destination size, and
@@ -135,7 +135,7 @@ func patch(base, delta []byte) ([]byte, error) {
 			//
 			// Return immediately.
 			return nil, fmt.Errorf(
-				"git/odb/pack: invalid delta data")
+				"gitobj/pack: invalid delta data")
 		}
 	}
 
@@ -145,7 +145,7 @@ func patch(base, delta []byte) ([]byte, error) {
 		// an invalid set of patch instructions.
 		//
 		// Return immediately.
-		return nil, fmt.Errorf("git/odb/pack: invalid delta data")
+		return nil, fmt.Errorf("gitobj/pack: invalid delta data")
 	}
 	return dest, nil
 }
@@ -159,7 +159,7 @@ func patchDeltaHeader(delta []byte, pos int) (size int64, end int) {
 
 	for shift == 0 || c&0x80 != 0 {
 		if len(delta) <= pos {
-			panic("git/odb/pack: invalid delta header")
+			panic("gitobj/pack: invalid delta header")
 		}
 
 		c = int64(delta[pos])

@@ -41,13 +41,13 @@ func NewBlobFromBytes(contents []byte) *Blob {
 func NewBlobFromFile(path string) (*Blob, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("git/odb: could not open: %s: %s", path,
+		return nil, fmt.Errorf("gitobj: could not open: %s: %s", path,
 			err)
 	}
 
 	stat, err := f.Stat()
 	if err != nil {
-		return nil, fmt.Errorf("git/odb: could not stat %s: %s", path,
+		return nil, fmt.Errorf("gitobj: could not stat %s: %s", path,
 			err)
 	}
 
@@ -58,7 +58,7 @@ func NewBlobFromFile(path string) (*Blob, error) {
 		closeFn: func() error {
 			if err := f.Close(); err != nil {
 				return fmt.Errorf(
-					"git/odb: could not close %s: %s",
+					"gitobj: could not close %s: %s",
 					path, err)
 			}
 			return nil

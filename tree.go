@@ -220,7 +220,7 @@ func (e *TreeEntry) Type() ObjectType {
 			// Safeguard that catch here, or otherwise panic.
 			return CommitObjectType
 		} else {
-			panic(fmt.Sprintf("git/odb: unknown object type: %o",
+			panic(fmt.Sprintf("gitobj: unknown object type: %o",
 				e.Filemode))
 		}
 	}
@@ -231,7 +231,7 @@ func (e *TreeEntry) Type() ObjectType {
 // write trees in a correct, readable format to the Git object database.
 //
 // The format is as follows: entries are sorted lexicographically in byte-order,
-// with subtrees (entries of Type() == git/odb.TreeObjectType) being sorted as
+// with subtrees (entries of Type() == gitobj.TreeObjectType) being sorted as
 // if their `Name` fields ended in a "/".
 //
 // See: https://github.com/git/git/blob/v2.13.0/fsck.c#L492-L525 for more

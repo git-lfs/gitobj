@@ -85,7 +85,7 @@ func NewObjectWriteCloser(w io.WriteCloser) *ObjectWriter {
 // WriteHeader MUST be called only once, or a panic() will occur.
 func (w *ObjectWriter) WriteHeader(typ ObjectType, len int64) (n int, err error) {
 	if !atomic.CompareAndSwapUint32(&w.wroteHeader, 0, 1) {
-		panic("git/odb: cannot write headers more than once")
+		panic("gitobj: cannot write headers more than once")
 	}
 	return fmt.Fprintf(w, "%s %d\x00", typ, len)
 }
@@ -98,7 +98,7 @@ func (w *ObjectWriter) WriteHeader(typ ObjectType, len int64) (n int, err error)
 // occur.
 func (w *ObjectWriter) Write(p []byte) (n int, err error) {
 	if atomic.LoadUint32(&w.wroteHeader) != 1 {
-		panic("git/odb: cannot write data without header")
+		panic("gitobj: cannot write data without header")
 	}
 	return w.w.Write(p)
 }

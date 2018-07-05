@@ -106,7 +106,7 @@ func (r *ObjectReader) Header() (typ ObjectType, size int64, err error) {
 	}
 	if len(typs) == 0 {
 		return UnknownObjectType, 0, fmt.Errorf(
-			"git/odb: object type must not be empty",
+			"gitobj: object type must not be empty",
 		)
 	}
 	typs = strings.TrimSuffix(typs, " ")

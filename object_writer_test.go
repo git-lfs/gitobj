@@ -61,7 +61,7 @@ func TestObjectWriterPanicsOnWritesWithoutHeader(t *testing.T) {
 		err := recover()
 
 		assert.NotNil(t, err)
-		assert.Equal(t, "git/odb: cannot write data without header", err)
+		assert.Equal(t, "gitobj: cannot write data without header", err)
 	}()
 
 	w := NewObjectWriter(new(bytes.Buffer))
@@ -73,7 +73,7 @@ func TestObjectWriterPanicsOnMultipleHeaderWrites(t *testing.T) {
 		err := recover()
 
 		assert.NotNil(t, err)
-		assert.Equal(t, "git/odb: cannot write headers more than once", err)
+		assert.Equal(t, "gitobj: cannot write headers more than once", err)
 	}()
 
 	w := NewObjectWriter(new(bytes.Buffer))

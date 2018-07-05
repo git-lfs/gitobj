@@ -57,7 +57,7 @@ func FromFilesystem(root, tmp string) (*ObjectDatabase, error) {
 // If Close() has already been called, this function will return an error.
 func (o *ObjectDatabase) Close() error {
 	if !atomic.CompareAndSwapUint32(&o.closed, 0, 1) {
-		return fmt.Errorf("git/odb: *ObjectDatabase already closed")
+		return fmt.Errorf("gitobj: *ObjectDatabase already closed")
 	}
 
 	if err := o.packs.Close(); err != nil {
@@ -245,7 +245,7 @@ func (o *ObjectDatabase) open(sha []byte) (*ObjectReader, error) {
 		// load its contents from the *git.ObjectScanner by leveraging
 		// `git-cat-file --batch`.
 		if atomic.LoadUint32(&o.closed) == 1 {
-			return nil, fmt.Errorf("git/odb: cannot use closed *pack.Set")
+			return nil, fmt.Errorf("gitobj: cannot use closed *pack.Set")
 		}
 
 		packed, err := o.packs.Object(sha)
@@ -279,7 +279,7 @@ func (o *ObjectDatabase) open(sha []byte) (*ObjectReader, error) {
 // the `io.Closer` interface), but skips this if the "into" Object is of type
 // BlobObjectType. Blob's don't exhaust the buffer completely (they instead
 // maintain a handle on the blob's contents via an io.LimitedReader) and
-// therefore cannot be closed until signaled explicitly by git/odb.Blob.Close().
+// therefore cannot be closed until signaled explicitly by gitobj.Blob.Close().
 func (o *ObjectDatabase) decode(sha []byte, into Object) error {
 	r, err := o.open(sha)
 	if err != nil {

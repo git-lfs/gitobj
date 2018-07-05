@@ -87,7 +87,7 @@ func TestChainDeltaWithInvalidDeltaInstruction(t *testing.T) {
 	}
 
 	data, err := c.Unpack()
-	assert.EqualError(t, err, "git/odb/pack: invalid delta data")
+	assert.EqualError(t, err, "gitobj/pack: invalid delta data")
 	assert.Nil(t, data)
 }
 
@@ -107,6 +107,6 @@ func TestChainDeltaWithExtraInstructions(t *testing.T) {
 	}
 
 	data, err := c.Unpack()
-	assert.EqualError(t, err, "git/odb/pack: invalid delta data")
+	assert.EqualError(t, err, "gitobj/pack: invalid delta data")
 	assert.Nil(t, data)
 }

@@ -20,7 +20,7 @@ func (c *PackedObjectStringTestCase) Assert(t *testing.T) {
 			err := recover()
 
 			if err == nil {
-				t.Fatalf("git/odb/pack: expected panic()")
+				t.Fatalf("gitobj/pack: expected panic()")
 			}
 
 			assert.Equal(t, c.Expected, fmt.Sprintf("%s", err))
@@ -45,7 +45,7 @@ func TestPackedObjectTypeString(t *testing.T) {
 			Expected: "obj_ref_delta"},
 
 		"unknown type": {T: PackedObjectType(5), Panic: true,
-			Expected: "git/odb/pack: unknown object type: 5"},
+			Expected: "gitobj/pack: unknown object type: 5"},
 	} {
 		t.Run(desc, c.Assert)
 	}

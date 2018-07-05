@@ -13,7 +13,7 @@ var (
 
 	// errBadPackHeader is a sentinel error value returned when the given
 	// pack header does not match the expected one.
-	errBadPackHeader = errors.New("git/odb/pack: bad pack header")
+	errBadPackHeader = errors.New("gitobj/pack: bad pack header")
 )
 
 // DecodePackfile opens the packfile given by the io.ReaderAt "r" for reading.

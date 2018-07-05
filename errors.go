@@ -14,5 +14,5 @@ type UnexpectedObjectType struct {
 
 // Error implements the error.Error() function.
 func (e *UnexpectedObjectType) Error() string {
-	return fmt.Sprintf("git/odb: unexpected object type, got: %q, wanted: %q", e.Got, e.Wanted)
+	return fmt.Sprintf("gitobj: unexpected object type, got: %q, wanted: %q", e.Got, e.Wanted)
 }

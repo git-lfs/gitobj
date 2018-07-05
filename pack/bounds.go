@@ -9,7 +9,7 @@ import "fmt"
 // inclusive or exclusive. *bounds makes no assumptions on the inclusivity of
 // those values.
 //
-// See: *git/odb/pack.Index for more.
+// See: *gitobj/pack.Index for more.
 type bounds struct {
 	// left is the left or lower bound of the bounds.
 	left int64

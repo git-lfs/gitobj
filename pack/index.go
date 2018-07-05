@@ -42,7 +42,7 @@ func (i *Index) Close() error {
 var (
 	// errNotFound is an error returned by Index.Entry() (see: below) when
 	// an object cannot be found in the index.
-	errNotFound = fmt.Errorf("git/odb/pack: object not found in index")
+	errNotFound = fmt.Errorf("gitobj/pack: object not found in index")
 )
 
 // IsNotFound returns whether a given error represents a missing object in the

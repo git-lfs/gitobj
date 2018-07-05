@@ -56,7 +56,7 @@ func (p *Packfile) Object(name []byte) (*Object, error) {
 		if !IsNotFound(err) {
 			// If the error was not an errNotFound, re-wrap it with
 			// additional context.
-			err = fmt.Errorf("git/odb/pack: could not load index: %s", err)
+			err = fmt.Errorf("gitobj/pack: could not load index: %s", err)
 		}
 		return nil, err
 	}
@@ -224,7 +224,7 @@ func (p *Packfile) findBase(typ PackedObjectType, offset, objOffset int64) (Chai
 		// If we did not receive an OBJ_OFS_DELTA, or OBJ_REF_DELTA, the
 		// type given is not a delta-fied type. Return an error.
 		return nil, baseOffset, fmt.Errorf(
-			"git/odb/pack: type %s is not deltafied", typ)
+			"gitobj/pack: type %s is not deltafied", typ)
 	}
 
 	// Once we have determined the base offset of the object's chain base,

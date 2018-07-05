@@ -11,5 +11,5 @@ type UnsupportedVersionErr struct {
 
 // Error implements 'error.Error()'.
 func (u *UnsupportedVersionErr) Error() string {
-	return fmt.Sprintf("git/odb/pack: unsupported version: %d", u.Got)
+	return fmt.Sprintf("gitobj/pack: unsupported version: %d", u.Got)
 }
