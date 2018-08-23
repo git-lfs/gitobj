@@ -66,6 +66,38 @@ func (o *ObjectDatabase) Close() error {
 	return nil
 }
 
+// Object returns an Object (of unknown implementation) satisfying the type
+// associated with the object named "sha".
+//
+// If the object could not be opened, is of unknown type, or could not be
+// decoded, than an appropriate error is returned instead.
+func (o *ObjectDatabase) Object(sha []byte) (Object, error) {
+	r, err := o.open(sha)
+	if err != nil {
+		return nil, err
+	}
+
+	typ, _, err := r.Header()
+	if err != nil {
+		return nil, err
+	}
+
+	var into Object
+	switch typ {
+	case BlobObjectType:
+		into = new(Blob)
+	case TreeObjectType:
+		into = new(Tree)
+	case CommitObjectType:
+		into = new(Commit)
+	case TagObjectType:
+		into = new(Tag)
+	default:
+		return nil, fmt.Errorf("gitobj: unknown object type: %s", typ)
+	}
+	return into, o.decode(r, into)
+}
+
 // Blob returns a *Blob as identified by the SHA given, or an error if one was
 // encountered.
 func (o *ObjectDatabase) Blob(sha []byte) (*Blob, error) {

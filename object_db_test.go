@@ -15,6 +15,32 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestDecodeObject(t *testing.T) {
+	sha := "af5626b4a114abcb82d63db7c8082c3c4756e51b"
+	contents := "Hello, world!\n"
+
+	var buf bytes.Buffer
+
+	zw := zlib.NewWriter(&buf)
+	fmt.Fprintf(zw, "blob 14\x00%s", contents)
+	zw.Close()
+
+	odb := &ObjectDatabase{s: newMemoryStorer(map[string]io.ReadWriter{
+		sha: &buf,
+	})}
+
+	shaHex, _ := hex.DecodeString(sha)
+	obj, err := odb.Object(shaHex)
+	blob, ok := obj.(*Blob)
+
+	require.NoError(t, err)
+	require.True(t, ok)
+
+	got, err := ioutil.ReadAll(blob.Contents)
+	assert.Nil(t, err)
+	assert.Equal(t, contents, string(got))
+}
+
 func TestDecodeBlob(t *testing.T) {
 	sha := "af5626b4a114abcb82d63db7c8082c3c4756e51b"
 	contents := "Hello, world!\n"
