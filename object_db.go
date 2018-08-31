@@ -66,12 +66,44 @@ func (o *ObjectDatabase) Close() error {
 	return nil
 }
 
+// Object returns an Object (of unknown implementation) satisfying the type
+// associated with the object named "sha".
+//
+// If the object could not be opened, is of unknown type, or could not be
+// decoded, than an appropriate error is returned instead.
+func (o *ObjectDatabase) Object(sha []byte) (Object, error) {
+	r, err := o.open(sha)
+	if err != nil {
+		return nil, err
+	}
+
+	typ, _, err := r.Header()
+	if err != nil {
+		return nil, err
+	}
+
+	var into Object
+	switch typ {
+	case BlobObjectType:
+		into = new(Blob)
+	case TreeObjectType:
+		into = new(Tree)
+	case CommitObjectType:
+		into = new(Commit)
+	case TagObjectType:
+		into = new(Tag)
+	default:
+		return nil, fmt.Errorf("gitobj: unknown object type: %s", typ)
+	}
+	return into, o.decode(r, into)
+}
+
 // Blob returns a *Blob as identified by the SHA given, or an error if one was
 // encountered.
 func (o *ObjectDatabase) Blob(sha []byte) (*Blob, error) {
 	var b Blob
 
-	if err := o.decode(sha, &b); err != nil {
+	if err := o.openDecode(sha, &b); err != nil {
 		return nil, err
 	}
 	return &b, nil
@@ -81,7 +113,7 @@ func (o *ObjectDatabase) Blob(sha []byte) (*Blob, error) {
 // encountered.
 func (o *ObjectDatabase) Tree(sha []byte) (*Tree, error) {
 	var t Tree
-	if err := o.decode(sha, &t); err != nil {
+	if err := o.openDecode(sha, &t); err != nil {
 		return nil, err
 	}
 	return &t, nil
@@ -92,7 +124,7 @@ func (o *ObjectDatabase) Tree(sha []byte) (*Tree, error) {
 func (o *ObjectDatabase) Commit(sha []byte) (*Commit, error) {
 	var c Commit
 
-	if err := o.decode(sha, &c); err != nil {
+	if err := o.openDecode(sha, &c); err != nil {
 		return nil, err
 	}
 	return &c, nil
@@ -103,7 +135,7 @@ func (o *ObjectDatabase) Commit(sha []byte) (*Commit, error) {
 func (o *ObjectDatabase) Tag(sha []byte) (*Tag, error) {
 	var t Tag
 
-	if err := o.decode(sha, &t); err != nil {
+	if err := o.openDecode(sha, &t); err != nil {
 		return nil, err
 	}
 	return &t, nil
@@ -272,6 +304,16 @@ func (o *ObjectDatabase) open(sha []byte) (*ObjectReader, error) {
 	return NewObjectReadCloser(f)
 }
 
+// openDecode calls decode (see: below) on the object named "sha" after openin
+// it.
+func (o *ObjectDatabase) openDecode(sha []byte, into Object) error {
+	r, err := o.open(sha)
+	if err != nil {
+		return err
+	}
+	return o.decode(r, into)
+}
+
 // decode decodes an object given by the sha "sha []byte" into the given object
 // "into", or returns an error if one was encountered.
 //
@@ -280,12 +322,7 @@ func (o *ObjectDatabase) open(sha []byte) (*ObjectReader, error) {
 // BlobObjectType. Blob's don't exhaust the buffer completely (they instead
 // maintain a handle on the blob's contents via an io.LimitedReader) and
 // therefore cannot be closed until signaled explicitly by gitobj.Blob.Close().
-func (o *ObjectDatabase) decode(sha []byte, into Object) error {
-	r, err := o.open(sha)
-	if err != nil {
-		return err
-	}
-
+func (o *ObjectDatabase) decode(r *ObjectReader, into Object) error {
 	typ, size, err := r.Header()
 	if err != nil {
 		return err
