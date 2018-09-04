@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync/atomic"
 
+	"github.com/git-lfs/gitobj/errors"
 	"github.com/git-lfs/gitobj/pack"
 )
 
@@ -266,7 +267,7 @@ func (o *ObjectDatabase) save(sha []byte, buf io.Reader) ([]byte, int64, error) 
 func (o *ObjectDatabase) open(sha []byte) (*ObjectReader, error) {
 	f, err := o.s.Open(sha)
 	if err != nil {
-		if !os.IsNotExist(err) {
+		if !errors.IsNoSuchObject(err) {
 			// If there was some other issue beyond not being able
 			// to find the object, return that immediately and don't
 			// try and fallback to the *git.ObjectScanner.

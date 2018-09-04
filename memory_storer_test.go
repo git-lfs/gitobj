@@ -5,10 +5,10 @@ import (
 	"encoding/hex"
 	"io"
 	"io/ioutil"
-	"os"
 	"strings"
 	"testing"
 
+	"github.com/git-lfs/gitobj/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -47,7 +47,7 @@ func TestMemoryStorerDoesntOpenMissingEntries(t *testing.T) {
 	ms := newMemoryStorer(nil)
 
 	f, err := ms.Open(hex)
-	assert.Equal(t, os.ErrNotExist, err)
+	assert.Equal(t, errors.NoSuchObject(hex), err)
 	assert.Nil(t, f)
 }
 

@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"os"
 	"sync"
+
+	"github.com/git-lfs/gitobj/errors"
 )
 
 // memoryStorer is an implementation of the storer interface that holds data for
@@ -57,7 +58,7 @@ func (ms *memoryStorer) Open(sha []byte) (f io.ReadCloser, err error) {
 
 	key := fmt.Sprintf("%x", sha)
 	if _, ok := ms.fs[key]; !ok {
-		return nil, os.ErrNotExist
+		return nil, errors.NoSuchObject(sha)
 	}
 	return ms.fs[key], nil
 }

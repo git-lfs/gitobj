@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/git-lfs/gitobj/errors"
 )
 
 // fileStorer implements the storer interface by writing to the .git/objects
@@ -34,7 +36,11 @@ func newFileStorer(root, tmp string) *fileStorer {
 // It is the caller's responsibility to close the given file "f" after its use
 // is complete.
 func (fs *fileStorer) Open(sha []byte) (f io.ReadCloser, err error) {
-	return fs.open(fs.path(sha), os.O_RDONLY)
+	f, err = fs.open(fs.path(sha), os.O_RDONLY)
+	if os.IsNotExist(err) {
+		return nil, errors.NoSuchObject(sha)
+	}
+	return f, err
 }
 
 // Store implements the storer.Store function and returns the number of bytes
