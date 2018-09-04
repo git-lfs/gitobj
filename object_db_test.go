@@ -25,9 +25,13 @@ func TestDecodeObject(t *testing.T) {
 	fmt.Fprintf(zw, "blob 14\x00%s", contents)
 	zw.Close()
 
-	odb := &ObjectDatabase{s: newMemoryStorer(map[string]io.ReadWriter{
+	b, err := NewMemoryBackend(map[string]io.ReadWriter{
 		sha: &buf,
-	})}
+	})
+	require.NoError(t, err)
+
+	odb, err := FromBackend(b)
+	require.NoError(t, err)
 
 	shaHex, _ := hex.DecodeString(sha)
 	obj, err := odb.Object(shaHex)
@@ -51,9 +55,13 @@ func TestDecodeBlob(t *testing.T) {
 	fmt.Fprintf(zw, "blob 14\x00%s", contents)
 	zw.Close()
 
-	odb := &ObjectDatabase{s: newMemoryStorer(map[string]io.ReadWriter{
+	b, err := NewMemoryBackend(map[string]io.ReadWriter{
 		sha: &buf,
-	})}
+	})
+	require.NoError(t, err)
+
+	odb, err := FromBackend(b)
+	require.NoError(t, err)
 
 	shaHex, _ := hex.DecodeString(sha)
 	blob, err := odb.Blob(shaHex)
@@ -83,9 +91,13 @@ func TestDecodeTree(t *testing.T) {
 	zw.Write(hexBlobSha)
 	zw.Close()
 
-	odb := &ObjectDatabase{s: newMemoryStorer(map[string]io.ReadWriter{
+	b, err := NewMemoryBackend(map[string]io.ReadWriter{
 		sha: &buf,
-	})}
+	})
+	require.NoError(t, err)
+
+	odb, err := FromBackend(b)
+	require.NoError(t, err)
 
 	tree, err := odb.Tree(hexSha)
 
@@ -113,9 +125,13 @@ func TestDecodeCommit(t *testing.T) {
 	fmt.Fprintf(zw, "\ninitial commit\n")
 	zw.Close()
 
-	odb := &ObjectDatabase{s: newMemoryStorer(map[string]io.ReadWriter{
+	b, err := NewMemoryBackend(map[string]io.ReadWriter{
 		sha: &buf,
-	})}
+	})
+	require.NoError(t, err)
+
+	odb, err := FromBackend(b)
+	require.NoError(t, err)
 
 	commit, err := odb.Commit(commitShaHex)
 
@@ -128,8 +144,11 @@ func TestDecodeCommit(t *testing.T) {
 }
 
 func TestWriteBlob(t *testing.T) {
-	fs := newMemoryStorer(make(map[string]io.ReadWriter))
-	odb := &ObjectDatabase{s: fs}
+	b, err := NewMemoryBackend(nil)
+	require.NoError(t, err)
+
+	odb, err := FromBackend(b)
+	require.NoError(t, err)
 
 	sha, err := odb.WriteBlob(&Blob{
 		Size:     14,
@@ -138,14 +157,19 @@ func TestWriteBlob(t *testing.T) {
 
 	expected := "af5626b4a114abcb82d63db7c8082c3c4756e51b"
 
+	_, s := b.Storage()
+
 	assert.Nil(t, err)
 	assert.Equal(t, expected, hex.EncodeToString(sha))
-	assert.NotNil(t, fs.fs[hex.EncodeToString(sha)])
+	assert.NotNil(t, s.(*memoryStorer).fs[hex.EncodeToString(sha)])
 }
 
 func TestWriteTree(t *testing.T) {
-	fs := newMemoryStorer(make(map[string]io.ReadWriter))
-	odb := &ObjectDatabase{s: fs}
+	b, err := NewMemoryBackend(nil)
+	require.NoError(t, err)
+
+	odb, err := FromBackend(b)
+	require.NoError(t, err)
 
 	blobSha := "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
 	hexBlobSha, err := hex.DecodeString(blobSha)
@@ -161,14 +185,19 @@ func TestWriteTree(t *testing.T) {
 
 	expected := "fcb545d5746547a597811b7441ed8eba307be1ff"
 
+	_, s := b.Storage()
+
 	assert.Nil(t, err)
 	assert.Equal(t, expected, hex.EncodeToString(sha))
-	assert.NotNil(t, fs.fs[hex.EncodeToString(sha)])
+	assert.NotNil(t, s.(*memoryStorer).fs[hex.EncodeToString(sha)])
 }
 
 func TestWriteCommit(t *testing.T) {
-	fs := newMemoryStorer(make(map[string]io.ReadWriter))
-	odb := &ObjectDatabase{s: fs}
+	b, err := NewMemoryBackend(nil)
+	require.NoError(t, err)
+
+	odb, err := FromBackend(b)
+	require.NoError(t, err)
 
 	when := time.Unix(1257894000, 0).UTC()
 	author := &Signature{Name: "John Doe", Email: "john@example.com", When: when}
@@ -187,9 +216,11 @@ func TestWriteCommit(t *testing.T) {
 
 	expected := "fee8a35c2890cd6e0e28d24cc457fcecbd460962"
 
+	_, s := b.Storage()
+
 	assert.Nil(t, err)
 	assert.Equal(t, expected, hex.EncodeToString(sha))
-	assert.NotNil(t, fs.fs[hex.EncodeToString(sha)])
+	assert.NotNil(t, s.(*memoryStorer).fs[hex.EncodeToString(sha)])
 }
 
 func TestDecodeTag(t *testing.T) {
@@ -208,9 +239,13 @@ func TestDecodeTag(t *testing.T) {
 	fmt.Fprintf(zw, "The quick brown fox jumps over the lazy dog.\n")
 	zw.Close()
 
-	odb := &ObjectDatabase{s: newMemoryStorer(map[string]io.ReadWriter{
+	b, err := NewMemoryBackend(map[string]io.ReadWriter{
 		sha: &buf,
-	})}
+	})
+	require.NoError(t, err)
+
+	odb, err := FromBackend(b)
+	require.NoError(t, err)
 
 	tag, err := odb.Tag(tagShaHex)
 
@@ -224,8 +259,11 @@ func TestDecodeTag(t *testing.T) {
 }
 
 func TestWriteTag(t *testing.T) {
-	fs := newMemoryStorer(make(map[string]io.ReadWriter))
-	odb := &ObjectDatabase{s: fs}
+	b, err := NewMemoryBackend(nil)
+	require.NoError(t, err)
+
+	odb, err := FromBackend(b)
+	require.NoError(t, err)
 
 	sha, err := odb.WriteTag(&Tag{
 		Object:     []byte("aaaaaaaaaaaaaaaaaaaa"),
@@ -238,16 +276,24 @@ func TestWriteTag(t *testing.T) {
 
 	expected := "e614dda21829f4176d3db27fe62fb4aee2e2475d"
 
+	_, s := b.Storage()
+
 	assert.Nil(t, err)
 	assert.Equal(t, expected, hex.EncodeToString(sha))
-	assert.NotNil(t, fs.fs[hex.EncodeToString(sha)])
+	assert.NotNil(t, s.(*memoryStorer).fs[hex.EncodeToString(sha)])
 }
 
 func TestReadingAMissingObjectAfterClose(t *testing.T) {
 	sha, _ := hex.DecodeString("af5626b4a114abcb82d63db7c8082c3c4756e51b")
 
+	b, err := NewMemoryBackend(nil)
+	require.NoError(t, err)
+
+	ro, rw := b.Storage()
+
 	db := &ObjectDatabase{
-		s:      newMemoryStorer(nil),
+		ro:     ro,
+		rw:     rw,
 		closed: 1,
 	}
 
