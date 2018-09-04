@@ -90,6 +90,16 @@ func (fs *fileStorer) Root() string {
 	return fs.root
 }
 
+// Close closes the file storer.
+func (fs *fileStorer) Close() error {
+	return nil
+}
+
+// IsCompressed returns true, because the file storer returns compressed data.
+func (fs *fileStorer) IsCompressed() bool {
+	return true
+}
+
 // open opens a given file.
 func (fs *fileStorer) open(path string, flag int) (*os.File, error) {
 	return os.OpenFile(path, flag, 0)

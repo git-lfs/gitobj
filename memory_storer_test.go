@@ -35,6 +35,7 @@ func TestMemoryStorerAcceptsNilEntries(t *testing.T) {
 
 	assert.NotNil(t, ms)
 	assert.Equal(t, 0, len(ms.fs))
+	assert.NoError(t, ms.Close())
 }
 
 func TestMemoryStorerDoesntOpenMissingEntries(t *testing.T) {

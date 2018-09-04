@@ -62,6 +62,16 @@ func (ms *memoryStorer) Open(sha []byte) (f io.ReadCloser, err error) {
 	return ms.fs[key], nil
 }
 
+// Close closes the memory storer.
+func (ms *memoryStorer) Close() error {
+	return nil
+}
+
+// IsCompressed returns true, because the memory storer returns compressed data.
+func (ms *memoryStorer) IsCompressed() bool {
+	return true
+}
+
 // bufCloser wraps a type satisfying the io.ReadWriter interface with a no-op
 // Close() function, thus implementing the io.ReadWriteCloser composite
 // interface.
