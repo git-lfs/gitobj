@@ -51,7 +51,7 @@ func (ms *memoryStorer) Store(sha []byte, r io.Reader) (n int64, err error) {
 // Open implements the storer.Open function, and returns a io.ReadWriteCloser
 // for the given SHA. If a reader for the given SHA does not exist an error will
 // be returned.
-func (ms *memoryStorer) Open(sha []byte) (f io.ReadWriteCloser, err error) {
+func (ms *memoryStorer) Open(sha []byte) (f io.ReadCloser, err error) {
 	ms.mu.Lock()
 	defer ms.mu.Unlock()
 
