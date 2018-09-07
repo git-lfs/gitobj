@@ -6,10 +6,9 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"strings"
 	"sync/atomic"
 
-	"github.com/git-lfs/gitobj/pack"
+	"github.com/git-lfs/gitobj/storage"
 )
 
 // ObjectDatabase enables the reading and writing of objects against a storage
@@ -23,11 +22,10 @@ type ObjectDatabase struct {
 	// and a value of 1 if it is closed.
 	closed uint32
 
-	// s is the storage backend which opens/creates/reads/writes.
-	s storer
-	// packs are the set of packfiles which contain all packed objects
-	// within this repository.
-	packs *pack.Set
+	// ro is the locations from which we can read objects.
+	ro storage.Storage
+	// rw is the location to which we write objects.
+	rw storage.WritableStorage
 
 	// temp directory, defaults to os.TempDir
 	tmp string
@@ -38,15 +36,24 @@ type ObjectDatabase struct {
 //
 //  /absolute/repo/path/.git/objects
 func FromFilesystem(root, tmp string) (*ObjectDatabase, error) {
-	packs, err := pack.NewSet(root)
+	b, err := NewFilesystemBackend(root, tmp)
 	if err != nil {
 		return nil, err
 	}
 
+	ro, rw := b.Storage()
 	return &ObjectDatabase{
-		tmp:   tmp,
-		s:     newFileStorer(root, tmp),
-		packs: packs,
+		tmp: tmp,
+		ro:  ro,
+		rw:  rw,
+	}, nil
+}
+
+func FromBackend(b storage.Backend) (*ObjectDatabase, error) {
+	ro, rw := b.Storage()
+	return &ObjectDatabase{
+		ro: ro,
+		rw: rw,
 	}, nil
 }
 
@@ -60,7 +67,10 @@ func (o *ObjectDatabase) Close() error {
 		return fmt.Errorf("gitobj: *ObjectDatabase already closed")
 	}
 
-	if err := o.packs.Close(); err != nil {
+	if err := o.ro.Close(); err != nil {
+		return err
+	}
+	if err := o.rw.Close(); err != nil {
 		return err
 	}
 	return nil
@@ -202,7 +212,7 @@ func (o *ObjectDatabase) Root() (string, bool) {
 		Root() string
 	}
 
-	if root, ok := o.s.(rooter); ok {
+	if root, ok := o.rw.(rooter); ok {
 		return root.Root(), true
 	}
 	return "", false
@@ -256,7 +266,7 @@ func (d *ObjectDatabase) encodeBuffer(object Object, buf io.ReadWriter) (sha []b
 // save writes the given buffer to the location given by the storer "o.s" as
 // identified by the sha []byte.
 func (o *ObjectDatabase) save(sha []byte, buf io.Reader) ([]byte, int64, error) {
-	n, err := o.s.Store(sha, buf)
+	n, err := o.rw.Store(sha, buf)
 
 	return sha, n, err
 }
@@ -264,44 +274,18 @@ func (o *ObjectDatabase) save(sha []byte, buf io.Reader) ([]byte, int64, error) 
 // open gives an `*ObjectReader` for the given loose object keyed by the given
 // "sha" []byte, or an error.
 func (o *ObjectDatabase) open(sha []byte) (*ObjectReader, error) {
-	f, err := o.s.Open(sha)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			// If there was some other issue beyond not being able
-			// to find the object, return that immediately and don't
-			// try and fallback to the *git.ObjectScanner.
-			return nil, err
-		}
-
-		// Otherwise, if the file simply couldn't be found, attempt to
-		// load its contents from the *git.ObjectScanner by leveraging
-		// `git-cat-file --batch`.
-		if atomic.LoadUint32(&o.closed) == 1 {
-			return nil, fmt.Errorf("gitobj: cannot use closed *pack.Set")
-		}
-
-		packed, err := o.packs.Object(sha)
-		if err != nil {
-			return nil, err
-		}
-
-		unpacked, err := packed.Unpack()
-		if err != nil {
-			return nil, err
-		}
-
-		return NewUncompressedObjectReader(io.MultiReader(
-			// Git object header:
-			strings.NewReader(fmt.Sprintf("%s %d\x00",
-				packed.Type(), len(unpacked),
-			)),
-
-			// Git object (uncompressed) contents:
-			bytes.NewReader(unpacked),
-		))
+	if atomic.LoadUint32(&o.closed) == 1 {
+		return nil, fmt.Errorf("gitobj: cannot use closed *pack.Set")
 	}
 
-	return NewObjectReadCloser(f)
+	f, err := o.ro.Open(sha)
+	if err != nil {
+		return nil, err
+	}
+	if o.ro.IsCompressed() {
+		return NewObjectReadCloser(f)
+	}
+	return NewUncompressedObjectReader(f)
 }
 
 // openDecode calls decode (see: below) on the object named "sha" after openin
