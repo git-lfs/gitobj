@@ -1,7 +1,10 @@
 package gitobj
 
 import (
+	"bufio"
 	"io"
+	"os"
+	"path"
 
 	"github.com/git-lfs/gitobj/pack"
 	"github.com/git-lfs/gitobj/storage"
@@ -15,10 +18,40 @@ func NewFilesystemBackend(root, tmp string) (storage.Backend, error) {
 		return nil, err
 	}
 
+	storage, err := findAllBackends(fsobj, packs, root)
+	if err != nil {
+		return nil, err
+	}
+
 	return &filesystemBackend{
 		fs:       fsobj,
-		backends: []storage.Storage{fsobj, packs},
+		backends: storage,
 	}, nil
+}
+
+func findAllBackends(mainLoose *fileStorer, mainPacked *pack.Storage, root string) ([]storage.Storage, error) {
+	storage := make([]storage.Storage, 2)
+	storage[0] = mainLoose
+	storage[1] = mainPacked
+	f, err := os.Open(path.Join(root, "info", "alternates"))
+	if err != nil {
+		// No alternates file, no problem.
+		if err != os.ErrNotExist {
+			return storage, nil
+		}
+		return nil, err
+	}
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		storage = append(storage, newFileStorer(scanner.Text(), ""))
+		pack, err := pack.NewStorage(scanner.Text())
+		if err != nil {
+			return nil, err
+		}
+		storage = append(storage, pack)
+	}
+	return storage, nil
 }
 
 // NewMemoryBackend initializes a new memory-based backend.
