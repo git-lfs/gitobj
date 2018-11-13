@@ -15,7 +15,10 @@ func NewFilesystemBackend(root, tmp string) (storage.Backend, error) {
 		return nil, err
 	}
 
-	return &filesystemBackend{fs: fsobj, packs: packs}, nil
+	return &filesystemBackend{
+		fs:       fsobj,
+		backends: []storage.Storage{fsobj, packs},
+	}, nil
 }
 
 // NewMemoryBackend initializes a new memory-based backend.
@@ -27,12 +30,12 @@ func NewMemoryBackend(m map[string]io.ReadWriter) (storage.Backend, error) {
 }
 
 type filesystemBackend struct {
-	fs    *fileStorer
-	packs *pack.Storage
+	fs       *fileStorer
+	backends []storage.Storage
 }
 
 func (b *filesystemBackend) Storage() (storage.Storage, storage.WritableStorage) {
-	return storage.MultiStorage(b.fs, b.packs), b.fs
+	return storage.MultiStorage(b.backends...), b.fs
 }
 
 type memoryBackend struct {
