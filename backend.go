@@ -41,6 +41,7 @@ func findAllBackends(mainLoose *fileStorer, mainPacked *pack.Storage, root strin
 		}
 		return nil, err
 	}
+	defer f.Close()
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
@@ -51,6 +52,11 @@ func findAllBackends(mainLoose *fileStorer, mainPacked *pack.Storage, root strin
 		}
 		storage = append(storage, pack)
 	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
 	return storage, nil
 }
 
