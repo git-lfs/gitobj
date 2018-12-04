@@ -55,12 +55,15 @@ func NewSet(db string) (*Set, error) {
 
 		name := submatch[1]
 
-		packf, err := os.Open(filepath.Join(pd, fmt.Sprintf("pack-%s.pack", name)))
+		idxf, err := os.Open(filepath.Join(pd, fmt.Sprintf("pack-%s.idx", name)))
 		if err != nil {
-			return nil, err
+			// We have a pack (since it matched the regex), but the
+			// index is missing or unusable.  Skip this pack and
+			// continue on with the next one, as Git does.
+			continue
 		}
 
-		idxf, err := os.Open(filepath.Join(pd, fmt.Sprintf("pack-%s.idx", name)))
+		packf, err := os.Open(filepath.Join(pd, fmt.Sprintf("pack-%s.pack", name)))
 		if err != nil {
 			return nil, err
 		}
