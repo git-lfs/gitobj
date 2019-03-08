@@ -132,10 +132,23 @@ func (c *Commit) Decode(from io.Reader, size int64) (n int, err error) {
 					c.Committer = ""
 				}
 			default:
-				c.ExtraHeaders = append(c.ExtraHeaders, &ExtraHeader{
-					K: fields[0],
-					V: strings.Join(fields[1:], " "),
-				})
+				if strings.HasPrefix(s.Text(), " ") {
+					idx := len(c.ExtraHeaders) - 1
+					hdr := c.ExtraHeaders[idx]
+
+					// Append the line of text (removing the
+					// leading space) to the last header
+					// that we parsed, adding a newline
+					// between the two.
+					hdr.V = strings.Join(append(
+						[]string{hdr.V}, s.Text()[1:],
+					), "\n")
+				} else {
+					c.ExtraHeaders = append(c.ExtraHeaders, &ExtraHeader{
+						K: fields[0],
+						V: strings.Join(fields[1:], " "),
+					})
+				}
 			}
 		} else {
 			messageParts = append(messageParts, s.Text())
@@ -177,7 +190,8 @@ func (c *Commit) Encode(to io.Writer) (n int, err error) {
 	n = n + n2
 
 	for _, hdr := range c.ExtraHeaders {
-		n3, err := fmt.Fprintf(to, "%s %s\n", hdr.K, hdr.V)
+		n3, err := fmt.Fprintf(to, "%s %s\n",
+			hdr.K, strings.Replace(hdr.V, "\n", "\n ", -1))
 		if err != nil {
 			return n, err
 		}
