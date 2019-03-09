@@ -105,7 +105,18 @@ func (c *Commit) Decode(from io.Reader, size int64) (n int, err error) {
 			continue
 		}
 
-		if fields := strings.Fields(text); len(fields) > 0 && !finishedHeaders {
+		if fields := strings.Fields(text); !finishedHeaders {
+			if len(fields) == 0 {
+				// Executing in this block means that we got a
+				// whitespace-only line, while parsing a header.
+				//
+				// Append it to the last-parsed header, and
+				// continue.
+				c.ExtraHeaders[len(c.ExtraHeaders)-1].V +=
+					fmt.Sprintf("\n%s", text[1:])
+				continue
+			}
+
 			switch fields[0] {
 			case "tree":
 				id, err := hex.DecodeString(fields[1])
