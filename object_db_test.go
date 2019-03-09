@@ -15,6 +15,44 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const roundTripCommitSha string = `561ed224a6bd39232d902ad8023c0ebe44fbf6c5`
+const roundTripCommit string = `tree f2ebdf9c967f69d57b370901f9344596ec47e51c
+parent fe8fbf7de1cd9f08ae642e502bf5de94e523cc08
+author brian m. carlson <bk2204@github.com> 1543506816 +0000
+committer brian m. carlson <bk2204@github.com> 1543506816 +0000
+gpgsig -----BEGIN PGP SIGNATURE-----
+ Version: GnuPG/MacGPG2 v2.2.9 (Darwin)
+ 
+ iQIGBAABCgAwFiEETbktHYzuflTwZxNFLQybwS+Cs6EFAlwAC4cSHGJrMjIwNEBn
+ aXRodWIuY29tAAoJEC0Mm8EvgrOhiRMN/2rTxkBb5BeQQeq7rPiIW8+29FzuvPeD
+ /DhxlRKwKut9h4qhtxNQszTezxhP4PLOkuMvUax2pGXCQ8cjkSswagmycev+AB4d
+ s0loG4SrEwvH8nAdr6qfNx4ZproRJ8QaEJqyN9SqF7PCWrUAoJKehdgA38WtYFws
+ ON+nIwzDIvgpoNI+DzgWrx16SOTp87xt8RaJOVK9JNZQk8zBh7rR2viS9CWLysmz
+ wOh3j4XI1TZ5IFJfpCxZzUDFgb6K3wpAX6Vux5F1f3cN5MsJn6WUJCmYCvwofeeZ
+ 6LMqKgry7EA12l7Tv/JtmMeh+rbT5WLdMIsjascUaHRhpJDNqqHCKMEj1zh3QZNY
+ Hycdcs24JouVAtPwg07f1ncPU3aE624LnNRA9A6Ih6SkkKE4tgMVA5qkObDfwzLE
+ lWyBj2QKySaIdSlU2EcoH3UK33v/ofrRr3+bUkDgxdqeV/RkBVvfpeMwFVSFWseE
+ bCcotryLCZF7vBQU+pKC+EaZxQV9L5+McGzcDYxUmqrhwtR+azRBYFOw+lOT4sYD
+ FxdLFWCtmDhKPX5Ajci2gmyfgCwdIeDhSuOf2iQQGRpE6y7aka4AlaE=
+ =UyqL
+ -----END PGP SIGNATURE-----
+
+pack/set: ignore packs without indices
+
+When we look for packs to read, we look for a pack file, and then an
+index, and fail if either one is missing.  When Git looks for packs to
+read, it looks only for indices and then checks if the pack is present.
+
+The Git approach handles the case when there is an extra pack that lacks
+an index, while our approach does not.  Consequently, we can get various
+errors (showing up so far only on Windows) when an index is missing.
+
+If the index file cannot be read for any reason, simply skip the entire
+pack altogether and continue on.  This leaves us no more or less
+functional than Git in terms of discovering objects and makes our error
+handling more robust.
+`
+
 func TestDecodeObject(t *testing.T) {
 	sha := "af5626b4a114abcb82d63db7c8082c3c4756e51b"
 	contents := "Hello, world!\n"
@@ -221,6 +259,28 @@ func TestWriteCommit(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, expected, hex.EncodeToString(sha))
 	assert.NotNil(t, s.(*memoryStorer).fs[hex.EncodeToString(sha)])
+}
+
+func TestWriteCommitWithGPGSignature(t *testing.T) {
+	b, err := NewMemoryBackend(nil)
+	require.NoError(t, err)
+
+	odb, err := FromBackend(b)
+	require.NoError(t, err)
+
+	commit := new(Commit)
+	_, err = commit.Decode(
+		strings.NewReader(roundTripCommit), int64(len(roundTripCommit)))
+	require.NoError(t, err)
+
+	buf := new(bytes.Buffer)
+	commit.Encode(buf)
+	assert.Equal(t, roundTripCommit, buf.String())
+
+	sha, err := odb.WriteCommit(commit)
+
+	assert.Nil(t, err)
+	assert.Equal(t, roundTripCommitSha, hex.EncodeToString(sha))
 }
 
 func TestDecodeTag(t *testing.T) {
