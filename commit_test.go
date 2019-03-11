@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCommitReturnsCorrectObjectType(t *testing.T) {
@@ -20,6 +21,8 @@ func TestCommitEncoding(t *testing.T) {
 	author := &Signature{Name: "John Doe", Email: "john@example.com", When: time.Now()}
 	committer := &Signature{Name: "Jane Doe", Email: "jane@example.com", When: time.Now()}
 
+	sig := "-----BEGIN PGP SIGNATURE-----\n<signature>\n-----END PGP SIGNATURE-----"
+
 	c := &Commit{
 		Author:    author.String(),
 		Committer: committer.String(),
@@ -29,6 +32,7 @@ func TestCommitEncoding(t *testing.T) {
 		TreeID: []byte("cccccccccccccccccccc"),
 		ExtraHeaders: []*ExtraHeader{
 			{"foo", "bar"},
+			{"gpgsig", sig},
 		},
 		Message: "initial commit",
 	}
@@ -44,6 +48,9 @@ func TestCommitEncoding(t *testing.T) {
 	assertLine(t, buf, "author %s", author.String())
 	assertLine(t, buf, "committer %s", committer.String())
 	assertLine(t, buf, "foo bar")
+	assertLine(t, buf, "gpgsig -----BEGIN PGP SIGNATURE-----")
+	assertLine(t, buf, " <signature>")
+	assertLine(t, buf, " -----END PGP SIGNATURE-----")
 	assertLine(t, buf, "")
 	assertLine(t, buf, "initial commit")
 
@@ -162,6 +169,41 @@ func TestCommitDecodingWithWhitespace(t *testing.T) {
 	assert.Equal(t, committer.String(), commit.Committer)
 	assert.Equal(t, treeIdAscii, hex.EncodeToString(commit.TreeID))
 	assert.Equal(t, "tree <- initial commit", commit.Message)
+}
+
+func TestCommitDecodingMultilineHeader(t *testing.T) {
+	author := &Signature{Name: "", Email: "john@example.com", When: time.Now()}
+	committer := &Signature{Name: "", Email: "jane@example.com", When: time.Now()}
+
+	treeId := []byte("cccccccccccccccccccc")
+
+	from := new(bytes.Buffer)
+
+	fmt.Fprintf(from, "author %s\n", author)
+	fmt.Fprintf(from, "committer %s\n", committer)
+	fmt.Fprintf(from, "tree %s\n", hex.EncodeToString(treeId))
+	fmt.Fprintf(from, "gpgsig -----BEGIN PGP SIGNATURE-----\n")
+	fmt.Fprintf(from, " <signature>\n")
+	fmt.Fprintf(from, " -----END PGP SIGNATURE-----\n")
+	fmt.Fprintf(from, "\ninitial commit\n")
+
+	flen := from.Len()
+
+	commit := new(Commit)
+	n, err := commit.Decode(from, int64(flen))
+
+	require.Nil(t, err)
+	require.Equal(t, flen, n)
+	require.Len(t, commit.ExtraHeaders, 1)
+
+	hdr := commit.ExtraHeaders[0]
+
+	assert.Equal(t, "gpgsig", hdr.K)
+	assert.EqualValues(t, []string{
+		"-----BEGIN PGP SIGNATURE-----",
+		"<signature>",
+		"-----END PGP SIGNATURE-----"},
+		strings.Split(hdr.V, "\n"))
 }
 
 func assertLine(t *testing.T, buf *bytes.Buffer, wanted string, args ...interface{}) {
