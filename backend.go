@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/git-lfs/gitobj/pack"
 	"github.com/git-lfs/gitobj/storage"
@@ -45,8 +46,12 @@ func findAllBackends(mainLoose *fileStorer, mainPacked *pack.Storage, root strin
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		storage = append(storage, newFileStorer(scanner.Text(), ""))
-		pack, err := pack.NewStorage(scanner.Text())
+		alternateRoot := scanner.Text()
+		if !filepath.IsAbs(alternateRoot) {
+			alternateRoot = filepath.Join(root, scanner.Text())
+		}
+		storage = append(storage, newFileStorer(alternateRoot, ""))
+		pack, err := pack.NewStorage(alternateRoot)
 		if err != nil {
 			return nil, err
 		}
