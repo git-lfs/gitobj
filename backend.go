@@ -45,12 +45,10 @@ func findAllBackends(mainLoose *fileStorer, mainPacked *pack.Storage, root strin
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		storage = append(storage, newFileStorer(scanner.Text(), ""))
-		pack, err := pack.NewStorage(scanner.Text())
+		storage, err = addAlternateDirectory(storage, scanner.Text())
 		if err != nil {
 			return nil, err
 		}
-		storage = append(storage, pack)
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -58,6 +56,16 @@ func findAllBackends(mainLoose *fileStorer, mainPacked *pack.Storage, root strin
 	}
 
 	return storage, nil
+}
+
+func addAlternateDirectory(s []storage.Storage, dir string) ([]storage.Storage, error) {
+	s = append(s, newFileStorer(dir, ""))
+	pack, err := pack.NewStorage(dir)
+	if err != nil {
+		return s, err
+	}
+	s = append(s, pack)
+	return s, nil
 }
 
 // NewMemoryBackend initializes a new memory-based backend.
