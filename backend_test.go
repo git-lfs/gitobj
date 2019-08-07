@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"io"
 	"io/ioutil"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -61,4 +62,27 @@ func TestNewMemoryBackendWithWritableData(t *testing.T) {
 	contents, err := ioutil.ReadAll(reader)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte{0x1}, contents)
+}
+
+func TestSplitAlternatesString(t *testing.T) {
+	testCases := []struct {
+		input    string
+		expected []string
+	}{
+		{"abc", []string{"abc"}},
+		{"abc:def", []string{"abc", "def"}},
+		{`"abc":def`, []string{"abc", "def"}},
+		{`"i\alike\bcomplicated\tstrings":def`, []string{"i\alike\bcomplicated\tstrings", "def"}},
+		{`abc:"i\nlike\vcomplicated\fstrings\r":def`, []string{"abc", "i\nlike\vcomplicated\fstrings\r", "def"}},
+		{`abc:"uni\xc2\xa9ode":def`, []string{"abc", "uni©ode", "def"}},
+		{`abc:"uni\302\251ode\10\0":def`, []string{"abc", "uni©ode\x08\x00", "def"}},
+		{`abc:"cookie\\monster\"":def`, []string{"abc", "cookie\\monster\"", "def"}},
+	}
+
+	for _, test := range testCases {
+		actual := splitAlternateString(test.input, ":")
+		if !reflect.DeepEqual(actual, test.expected) {
+			t.Errorf("unexpected output for %q: got %v, expected %v", test.input, actual, test.expected)
+		}
+	}
 }
