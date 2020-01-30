@@ -96,6 +96,7 @@ func (c *Commit) Decode(from io.Reader, size int64) (n int, err error) {
 	var messageParts []string
 
 	s := bufio.NewScanner(from)
+	s.Buffer(nil, 1024 * 1024)
 	for s.Scan() {
 		text := s.Text()
 		n = n + len(text+"\n")
@@ -169,7 +170,7 @@ func (c *Commit) Decode(from io.Reader, size int64) (n int, err error) {
 	c.Message = strings.Join(messageParts, "\n")
 
 	if err = s.Err(); err != nil {
-		return n, err
+		return n, fmt.Errorf("failed to parse commit buffer: %s", err)
 	}
 	return n, err
 }
