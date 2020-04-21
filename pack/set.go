@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/git-lfs/gitobj/errors"
+	"github.com/git-lfs/gitobj/v2/errors"
 )
 
 // Set allows access of objects stored across a set of packfiles.

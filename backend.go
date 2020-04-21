@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/git-lfs/gitobj/pack"
-	"github.com/git-lfs/gitobj/storage"
+	"github.com/git-lfs/gitobj/v2/pack"
+	"github.com/git-lfs/gitobj/v2/storage"
 )
 
 // NewFilesystemBackend initializes a new filesystem-based backend.
