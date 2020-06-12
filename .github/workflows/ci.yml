@@ -1,0 +1,16 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  build-go:
+    name: Default build
+    strategy:
+      matrix:
+        go: ['1.12.x', '1.13.x', '1.14.x']
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-go@v1
+      with:
+        go-version: ${{ matrix.go }}
+    - run: script/cibuild
