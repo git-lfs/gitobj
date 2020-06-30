@@ -370,7 +370,7 @@ func (o *ObjectDatabase) decode(r *ObjectReader, into Object) error {
 		return &UnexpectedObjectType{Got: typ, Wanted: into.Type()}
 	}
 
-	if _, err = into.Decode(r, size); err != nil {
+	if _, err = into.Decode(o.Hasher(), r, size); err != nil {
 		return err
 	}
 

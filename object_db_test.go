@@ -3,6 +3,7 @@ package gitobj
 import (
 	"bytes"
 	"compress/zlib"
+	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -270,6 +271,7 @@ func TestWriteCommitWithGPGSignature(t *testing.T) {
 
 	commit := new(Commit)
 	_, err = commit.Decode(
+		sha1.New(),
 		strings.NewReader(roundTripCommit), int64(len(roundTripCommit)))
 	require.NoError(t, err)
 

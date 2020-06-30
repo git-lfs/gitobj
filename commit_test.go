@@ -2,6 +2,7 @@ package gitobj
 
 import (
 	"bytes"
+	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -77,7 +78,7 @@ func TestCommitDecoding(t *testing.T) {
 	flen := from.Len()
 
 	commit := new(Commit)
-	n, err := commit.Decode(from, int64(flen))
+	n, err := commit.Decode(sha1.New(), from, int64(flen))
 
 	assert.Nil(t, err)
 	assert.Equal(t, flen, n)
@@ -107,7 +108,7 @@ func TestCommitDecodingWithEmptyName(t *testing.T) {
 	flen := from.Len()
 
 	commit := new(Commit)
-	n, err := commit.Decode(from, int64(flen))
+	n, err := commit.Decode(sha1.New(), from, int64(flen))
 
 	assert.Nil(t, err)
 	assert.Equal(t, flen, n)
@@ -138,7 +139,7 @@ func TestCommitDecodingWithLargeCommitMessage(t *testing.T) {
 	flen := from.Len()
 
 	commit := new(Commit)
-	n, err := commit.Decode(from, int64(flen))
+	n, err := commit.Decode(sha1.New(), from, int64(flen))
 
 	assert.Nil(t, err)
 	assert.Equal(t, flen, n)
@@ -164,7 +165,7 @@ func TestCommitDecodingWithMessageKeywordPrefix(t *testing.T) {
 	flen := from.Len()
 
 	commit := new(Commit)
-	n, err := commit.Decode(from, int64(flen))
+	n, err := commit.Decode(sha1.New(), from, int64(flen))
 
 	assert.NoError(t, err)
 	assert.Equal(t, flen, n)
@@ -191,7 +192,7 @@ func TestCommitDecodingWithWhitespace(t *testing.T) {
 	flen := from.Len()
 
 	commit := new(Commit)
-	n, err := commit.Decode(from, int64(flen))
+	n, err := commit.Decode(sha1.New(), from, int64(flen))
 
 	assert.NoError(t, err)
 	assert.Equal(t, flen, n)
@@ -221,7 +222,7 @@ func TestCommitDecodingMultilineHeader(t *testing.T) {
 	flen := from.Len()
 
 	commit := new(Commit)
-	n, err := commit.Decode(from, int64(flen))
+	n, err := commit.Decode(sha1.New(), from, int64(flen))
 
 	require.Nil(t, err)
 	require.Equal(t, flen, n)

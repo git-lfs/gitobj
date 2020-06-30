@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"hash"
 	"io"
 	"strings"
 	"time"
@@ -91,12 +92,12 @@ func (c *Commit) Type() ObjectType { return CommitObjectType }
 //
 // If any error was encountered along the way, that will be returned, along with
 // the number of bytes read up to that point.
-func (c *Commit) Decode(from io.Reader, size int64) (n int, err error) {
+func (c *Commit) Decode(hash hash.Hash, from io.Reader, size int64) (n int, err error) {
 	var finishedHeaders bool
 	var messageParts []string
 
 	s := bufio.NewScanner(from)
-	s.Buffer(nil, 1024 * 1024)
+	s.Buffer(nil, 1024*1024)
 	for s.Scan() {
 		text := s.Text()
 		n = n + len(text+"\n")

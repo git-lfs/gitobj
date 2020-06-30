@@ -2,6 +2,7 @@ package gitobj
 
 import (
 	"bytes"
+	"crypto/sha1"
 	"fmt"
 	"testing"
 
@@ -52,7 +53,7 @@ func TestTagDecode(t *testing.T) {
 	flen := from.Len()
 
 	tag := new(Tag)
-	n, err := tag.Decode(from, int64(flen))
+	n, err := tag.Decode(sha1.New(), from, int64(flen))
 
 	assert.Nil(t, err)
 	assert.Equal(t, n, flen)
