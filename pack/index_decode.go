@@ -34,8 +34,6 @@ const (
 	// V2 header.
 	indexOffsetV2Start = indexV2Width + indexFanoutWidth
 
-	// indexObjectNameWidth is the width of a SHA1 object name.
-	indexObjectNameWidth = 20
 	// indexObjectCRCWidth is the width of the CRC accompanying each object
 	// in V2.
 	indexObjectCRCWidth = 4
@@ -45,13 +43,6 @@ const (
 	// indexObjectLargeOffsetWidth is the width of the optional large offset
 	// encoded into the small offset.
 	indexObjectLargeOffsetWidth = 8
-
-	// indexObjectEntryV1Width is the width of one contiguous object entry
-	// in V1.
-	indexObjectEntryV1Width = indexObjectNameWidth + indexObjectSmallOffsetWidth
-	// indexObjectEntryV2Width is the width of one non-contiguous object
-	// entry in V2.
-	indexObjectEntryV2Width = indexObjectNameWidth + indexObjectCRCWidth + indexObjectSmallOffsetWidth
 )
 
 var (
