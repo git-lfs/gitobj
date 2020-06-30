@@ -2,6 +2,7 @@ package pack
 
 import (
 	"fmt"
+	"hash"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -38,7 +39,7 @@ var (
 // containing them. If there was an error parsing the packfiles in that
 // directory, or the directory was otherwise unable to be observed, NewSet
 // returns that error.
-func NewSet(db string) (*Set, error) {
+func NewSet(db string, algo hash.Hash) (*Set, error) {
 	pd := filepath.Join(db, "pack")
 
 	paths, err := filepath.Glob(filepath.Join(escapeGlobPattern(pd), "*.pack"))
