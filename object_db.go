@@ -294,7 +294,7 @@ func (d *ObjectDatabase) encodeBuffer(object Object, buf io.ReadWriter) (sha []b
 	}
 	defer d.cleanup(tmp)
 
-	to := NewObjectWriter(tmp)
+	to := NewObjectWriter(tmp, d.Hasher())
 	if _, err = to.WriteHeader(object.Type(), int64(cn)); err != nil {
 		return nil, 0, err
 	}
