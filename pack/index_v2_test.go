@@ -3,7 +3,9 @@ package pack
 import (
 	"bytes"
 	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/binary"
+	"hash"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,20 +17,6 @@ var (
 		0x00, 0x00, 0x00, 0x02,
 	}
 	V2IndexFanout = make([]uint32, indexFanoutEntries)
-
-	V2IndexNames = []byte{
-		0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1,
-		0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1,
-
-		0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2,
-		0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2,
-
-		0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3,
-		0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3,
-	}
-	V2IndexSmallSha  = V2IndexNames[0:20]
-	V2IndexMediumSha = V2IndexNames[20:40]
-	V2IndexLargeSha  = V2IndexNames[40:60]
 
 	V2IndexCRCs = []byte{
 		0x0, 0x0, 0x0, 0x0,
@@ -44,35 +32,38 @@ var (
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // filler data
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, // large offset
 	}
-
-	V2Index = &Index{
-		fanout:  V2IndexFanout,
-		version: &V2{hash: sha1.New()},
-	}
 )
 
 func TestIndexV2EntryExact(t *testing.T) {
-	v := &V2{hash: sha1.New()}
-	e, err := v.Entry(V2Index, 1)
+	for _, algo := range []hash.Hash{sha1.New(), sha256.New()} {
+		index := newV2Index(algo)
+		v := &V2{hash: algo}
+		e, err := v.Entry(index, 1)
 
-	assert.NoError(t, err)
-	assert.EqualValues(t, 2, e.PackOffset)
+		assert.NoError(t, err)
+		assert.EqualValues(t, 2, e.PackOffset)
+	}
 }
 
 func TestIndexV2EntryExtendedOffset(t *testing.T) {
-	v := &V2{hash: sha1.New()}
-	e, err := v.Entry(V2Index, 2)
+	for _, algo := range []hash.Hash{sha1.New(), sha256.New()} {
+		index := newV2Index(algo)
+		v := &V2{hash: algo}
+		e, err := v.Entry(index, 2)
 
-	assert.NoError(t, err)
-	assert.EqualValues(t, 3, e.PackOffset)
+		assert.NoError(t, err)
+		assert.EqualValues(t, 3, e.PackOffset)
+	}
 }
 
 func TestIndexVersionWidthV2(t *testing.T) {
-	v := &V2{hash: sha1.New()}
-	assert.EqualValues(t, 8, v.Width())
+	for _, algo := range []hash.Hash{sha1.New(), sha256.New()} {
+		v := &V2{hash: algo}
+		assert.EqualValues(t, 8, v.Width())
+	}
 }
 
-func init() {
+func newV2Index(hash hash.Hash) *Index {
 	V2IndexFanout[1] = 1
 	V2IndexFanout[2] = 2
 	V2IndexFanout[3] = 3
@@ -86,12 +77,23 @@ func init() {
 		binary.BigEndian.PutUint32(fanout[i*indexFanoutEntryWidth:], n)
 	}
 
-	buf := make([]byte, 0, indexOffsetV2Start+3*(indexObjectEntryV2Width)+indexObjectLargeOffsetWidth)
+	hashlen := hash.Size()
+	names := make([]byte, hashlen*3)
+
+	for i := range names {
+		names[i] = byte((i / hashlen) + 1)
+	}
+
+	buf := make([]byte, 0, indexOffsetV2Start+3)
 	buf = append(buf, V2IndexHeader...)
 	buf = append(buf, fanout...)
-	buf = append(buf, V2IndexNames...)
+	buf = append(buf, names...)
 	buf = append(buf, V2IndexCRCs...)
 	buf = append(buf, V2IndexOffsets...)
 
-	V2Index.r = bytes.NewReader(buf)
+	return &Index{
+		fanout:  V2IndexFanout,
+		version: &V2{hash: hash},
+		r:       bytes.NewReader(buf),
+	}
 }
