@@ -119,10 +119,10 @@ func TestCommitDecodingWithEmptyName(t *testing.T) {
 }
 
 func TestCommitDecodingWithLargeCommitMessage(t *testing.T) {
-	message := "This message text is, with newline, exactly 64 characters long. ";
+	message := "This message text is, with newline, exactly 64 characters long. "
 	// This message will be exactly 1 MiB in size when part of the commit.
-	longMessage := strings.Repeat(message, (1024 * 1024 / 64) - 1)
-	longMessage += strings.TrimSpace(message);
+	longMessage := strings.Repeat(message, (1024*1024/64)-1)
+	longMessage += strings.TrimSpace(message)
 
 	author := &Signature{Name: "", Email: "john@example.com", When: time.Now()}
 	committer := &Signature{Name: "", Email: "jane@example.com", When: time.Now()}
