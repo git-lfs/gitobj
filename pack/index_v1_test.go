@@ -3,7 +3,9 @@ package pack
 import (
 	"bytes"
 	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/binary"
+	"hash"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,51 +13,27 @@ import (
 
 var (
 	V1IndexFanout = make([]uint32, indexFanoutEntries)
-
-	V1IndexSmallEntry = []byte{
-		0x0, 0x0, 0x0, 0x1,
-
-		0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1,
-		0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1,
-	}
-	V1IndexSmallSha = V1IndexSmallEntry[4:]
-
-	V1IndexMediumEntry = []byte{
-		0x0, 0x0, 0x0, 0x2,
-
-		0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2,
-		0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2,
-	}
-	V1IndexMediumSha = V1IndexMediumEntry[4:]
-
-	V1IndexLargeEntry = []byte{
-		0x0, 0x0, 0x0, 0x3,
-
-		0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3,
-		0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3,
-	}
-	V1IndexLargeSha = V1IndexLargeEntry[4:]
-
-	V1Index = &Index{
-		fanout:  V1IndexFanout,
-		version: &V1{hash: sha1.New()},
-	}
 )
 
 func TestIndexV1SearchExact(t *testing.T) {
-	v := &V1{hash: sha1.New()}
-	e, err := v.Entry(V1Index, 1)
+	for _, algo := range []hash.Hash{sha1.New(), sha256.New()} {
+		index := newV1Index(algo)
+		v := &V1{hash: algo}
+		e, err := v.Entry(index, 1)
 
-	assert.NoError(t, err)
-	assert.EqualValues(t, 2, e.PackOffset)
+		assert.NoError(t, err)
+		assert.EqualValues(t, 2, e.PackOffset)
+	}
 }
 
 func TestIndexVersionWidthV1(t *testing.T) {
-	v := &V1{hash: sha1.New()}
-	assert.EqualValues(t, 0, v.Width())
+	for _, algo := range []hash.Hash{sha1.New(), sha256.New()} {
+		v := &V1{hash: algo}
+		assert.EqualValues(t, 0, v.Width())
+	}
 }
 
-func init() {
+func newV1Index(hash hash.Hash) *Index {
 	V1IndexFanout[1] = 1
 	V1IndexFanout[2] = 2
 	V1IndexFanout[3] = 3
@@ -69,12 +47,29 @@ func init() {
 		binary.BigEndian.PutUint32(fanout[i*indexFanoutEntryWidth:], n)
 	}
 
-	buf := make([]byte, 0, indexOffsetV1Start+(3*indexObjectEntryV1Width))
+	hashlen := hash.Size()
+	entrylen := hashlen + indexObjectCRCWidth
+	entries := make([]byte, entrylen*3)
+
+	for i := 0; i < 3; i++ {
+		// For each entry, set the first three bytes to 0 and the
+		// remainder to the same value.  That creates an initial 4-byte
+		// CRC field with the value of i+1, followed by a series of data
+		// bytes which all have that same value.
+		for j := entrylen*i + 3; j < entrylen*(i+1); j++ {
+			entries[j] = byte(i + 1)
+		}
+	}
+
+	buf := make([]byte, 0, indexOffsetV1Start)
 
 	buf = append(buf, fanout...)
-	buf = append(buf, V1IndexSmallEntry...)
-	buf = append(buf, V1IndexMediumEntry...)
-	buf = append(buf, V1IndexLargeEntry...)
+	buf = append(buf, entries...)
 
-	V1Index.r = bytes.NewReader(buf)
+	return &Index{
+		fanout:  V1IndexFanout,
+		version: &V1{hash: hash},
+		r:       bytes.NewReader(buf),
+	}
+
 }
