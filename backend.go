@@ -2,6 +2,7 @@ package gitobj
 
 import (
 	"bufio"
+	"hash"
 	"io"
 	"os"
 	"path"
@@ -13,16 +14,12 @@ import (
 	"github.com/git-lfs/gitobj/v2/storage"
 )
 
-// NewFilesystemBackend initializes a new filesystem-based backend.
-func NewFilesystemBackend(root, tmp string) (storage.Backend, error) {
-	return NewFilesystemBackendWithAlternates(root, tmp, "")
-}
-
-// NewFilesystemBackendWithAlternates initializes a new filesystem-based
-// backend, optionally with additional alternates as specified in the
+// NewFilesystemBackend initializes a new filesystem-based backend,
+// optionally with additional alternates as specified in the
 // `alternates` variable. The syntax is that of the Git environment variable
-// GIT_ALTERNATE_OBJECT_DIRECTORIES.
-func NewFilesystemBackendWithAlternates(root, tmp, alternates string) (storage.Backend, error) {
+// GIT_ALTERNATE_OBJECT_DIRECTORIES.  The hash algorithm used is specified by
+// the algo parameter.
+func NewFilesystemBackend(root, tmp, alternates string, algo hash.Hash) (storage.Backend, error) {
 	fsobj := newFileStorer(root, tmp)
 	packs, err := pack.NewStorage(root)
 	if err != nil {

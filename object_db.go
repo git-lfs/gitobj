@@ -79,7 +79,7 @@ func FromFilesystem(root, tmp string, setters ...Option) (*ObjectDatabase, error
 		setter(args)
 	}
 
-	b, err := NewFilesystemBackendWithAlternates(root, tmp, args.alternates)
+	b, err := NewFilesystemBackend(root, tmp, args.alternates, hasher(args.objectFormat))
 	if err != nil {
 		return nil, err
 	}
