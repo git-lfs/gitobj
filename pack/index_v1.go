@@ -2,10 +2,13 @@ package pack
 
 import (
 	"encoding/binary"
+	"hash"
 )
 
 // V1 implements IndexVersion for v1 packfiles.
-type V1 struct{}
+type V1 struct {
+	hash hash.Hash
+}
 
 // Name implements IndexVersion.Name by returning the 20 byte SHA-1 object name
 // for the given entry at offset "at" in the v1 index file "idx".

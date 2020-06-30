@@ -3,6 +3,7 @@ package pack
 import (
 	"compress/zlib"
 	"fmt"
+	"hash"
 	"io"
 	"io/ioutil"
 )
@@ -17,6 +18,9 @@ type Packfile struct {
 	// idx is the corresponding "pack-*.idx" file giving the positions of
 	// objects in this packfile.
 	idx *Index
+
+	// hash is the hash algorithm used in this pack.
+	hash hash.Hash
 
 	// r is an io.ReaderAt that allows read access to the packfile itself.
 	r io.ReaderAt
