@@ -76,12 +76,12 @@ func NewSet(db string, algo hash.Hash) (*Set, error) {
 			return nil, err
 		}
 
-		pack, err := DecodePackfile(packf)
+		pack, err := DecodePackfile(packf, algo)
 		if err != nil {
 			return nil, err
 		}
 
-		idx, err := DecodeIndex(idxf)
+		idx, err := DecodeIndex(idxf, algo)
 		if err != nil {
 			return nil, err
 		}
@@ -139,7 +139,7 @@ func NewSetPacks(packs ...*Packfile) *Set {
 	}
 
 	return &Set{
-		m: m,
+		m:    m,
 		closeFn: func() error {
 			for _, pack := range packs {
 				if err := pack.Close(); err != nil {

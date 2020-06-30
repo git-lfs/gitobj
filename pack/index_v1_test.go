@@ -2,6 +2,7 @@ package pack
 
 import (
 	"bytes"
+	"crypto/sha1"
 	"encoding/binary"
 	"testing"
 
@@ -37,19 +38,21 @@ var (
 
 	V1Index = &Index{
 		fanout:  V1IndexFanout,
-		version: new(V1),
+		version: &V1{hash: sha1.New()},
 	}
 )
 
 func TestIndexV1SearchExact(t *testing.T) {
-	e, err := new(V1).Entry(V1Index, 1)
+	v := &V1{hash: sha1.New()}
+	e, err := v.Entry(V1Index, 1)
 
 	assert.NoError(t, err)
 	assert.EqualValues(t, 2, e.PackOffset)
 }
 
 func TestIndexVersionWidthV1(t *testing.T) {
-	assert.EqualValues(t, 0, new(V1).Width())
+	v := &V1{hash: sha1.New()}
+	assert.EqualValues(t, 0, v.Width())
 }
 
 func init() {
