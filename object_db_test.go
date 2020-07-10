@@ -3,6 +3,7 @@ package gitobj
 import (
 	"bytes"
 	"compress/zlib"
+	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -54,211 +55,322 @@ handling more robust.
 `
 
 func TestDecodeObject(t *testing.T) {
-	sha := "af5626b4a114abcb82d63db7c8082c3c4756e51b"
-	contents := "Hello, world!\n"
+	testCases := []struct {
+		options []Option
+		sha     string
+	}{
+		{
+			[]Option{}, "af5626b4a114abcb82d63db7c8082c3c4756e51b",
+		},
+		{
+			[]Option{ObjectFormat(ObjectFormatSHA256)}, "7506cbcf4c572be9e06a1fed35ac5b1df8b5a74d26c07f022648e5d95a9f6f2a",
+		},
+	}
 
-	var buf bytes.Buffer
+	for _, test := range testCases {
+		contents := "Hello, world!\n"
 
-	zw := zlib.NewWriter(&buf)
-	fmt.Fprintf(zw, "blob 14\x00%s", contents)
-	zw.Close()
+		var buf bytes.Buffer
 
-	b, err := NewMemoryBackend(map[string]io.ReadWriter{
-		sha: &buf,
-	})
-	require.NoError(t, err)
+		zw := zlib.NewWriter(&buf)
+		fmt.Fprintf(zw, "blob 14\x00%s", contents)
+		zw.Close()
 
-	odb, err := FromBackend(b)
-	require.NoError(t, err)
+		b, err := NewMemoryBackend(map[string]io.ReadWriter{
+			test.sha: &buf,
+		})
+		require.NoError(t, err)
 
-	shaHex, _ := hex.DecodeString(sha)
-	obj, err := odb.Object(shaHex)
-	blob, ok := obj.(*Blob)
+		odb, err := FromBackend(b, test.options...)
+		require.NoError(t, err)
 
-	require.NoError(t, err)
-	require.True(t, ok)
+		shaHex, _ := hex.DecodeString(test.sha)
+		obj, err := odb.Object(shaHex)
+		blob, ok := obj.(*Blob)
 
-	got, err := ioutil.ReadAll(blob.Contents)
-	assert.Nil(t, err)
-	assert.Equal(t, contents, string(got))
+		require.NoError(t, err)
+		require.True(t, ok)
+
+		got, err := ioutil.ReadAll(blob.Contents)
+		assert.Nil(t, err)
+		assert.Equal(t, contents, string(got))
+	}
 }
 
 func TestDecodeBlob(t *testing.T) {
-	sha := "af5626b4a114abcb82d63db7c8082c3c4756e51b"
-	contents := "Hello, world!\n"
+	testCases := []struct {
+		options []Option
+		sha     string
+	}{
+		{
+			[]Option{}, "af5626b4a114abcb82d63db7c8082c3c4756e51b",
+		},
+		{
+			[]Option{ObjectFormat(ObjectFormatSHA256)}, "7506cbcf4c572be9e06a1fed35ac5b1df8b5a74d26c07f022648e5d95a9f6f2a",
+		},
+	}
 
-	var buf bytes.Buffer
+	for _, test := range testCases {
+		contents := "Hello, world!\n"
 
-	zw := zlib.NewWriter(&buf)
-	fmt.Fprintf(zw, "blob 14\x00%s", contents)
-	zw.Close()
+		var buf bytes.Buffer
 
-	b, err := NewMemoryBackend(map[string]io.ReadWriter{
-		sha: &buf,
-	})
-	require.NoError(t, err)
+		zw := zlib.NewWriter(&buf)
+		fmt.Fprintf(zw, "blob 14\x00%s", contents)
+		zw.Close()
 
-	odb, err := FromBackend(b)
-	require.NoError(t, err)
+		b, err := NewMemoryBackend(map[string]io.ReadWriter{
+			test.sha: &buf,
+		})
+		require.NoError(t, err)
 
-	shaHex, _ := hex.DecodeString(sha)
-	blob, err := odb.Blob(shaHex)
+		odb, err := FromBackend(b, test.options...)
+		require.NoError(t, err)
 
-	assert.Nil(t, err)
-	assert.EqualValues(t, 14, blob.Size)
+		shaHex, _ := hex.DecodeString(test.sha)
+		blob, err := odb.Blob(shaHex)
 
-	got, err := ioutil.ReadAll(blob.Contents)
-	assert.Nil(t, err)
-	assert.Equal(t, contents, string(got))
+		assert.Nil(t, err)
+		assert.EqualValues(t, 14, blob.Size)
+
+		got, err := ioutil.ReadAll(blob.Contents)
+		assert.Nil(t, err)
+		assert.Equal(t, contents, string(got))
+	}
 }
 
 func TestDecodeTree(t *testing.T) {
-	sha := "fcb545d5746547a597811b7441ed8eba307be1ff"
-	hexSha, err := hex.DecodeString(sha)
-	require.Nil(t, err)
-
-	blobSha := "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
-	hexBlobSha, err := hex.DecodeString(blobSha)
-	require.Nil(t, err)
-
-	var buf bytes.Buffer
-
-	zw := zlib.NewWriter(&buf)
-	fmt.Fprintf(zw, "tree 37\x00")
-	fmt.Fprintf(zw, "100644 hello.txt\x00")
-	zw.Write(hexBlobSha)
-	zw.Close()
-
-	b, err := NewMemoryBackend(map[string]io.ReadWriter{
-		sha: &buf,
-	})
-	require.NoError(t, err)
-
-	odb, err := FromBackend(b)
-	require.NoError(t, err)
-
-	tree, err := odb.Tree(hexSha)
-
-	assert.Nil(t, err)
-	require.Equal(t, 1, len(tree.Entries))
-	assert.Equal(t, &TreeEntry{
-		Name:     "hello.txt",
-		Oid:      hexBlobSha,
-		Filemode: 0100644,
-	}, tree.Entries[0])
-}
-
-func TestDecodeCommit(t *testing.T) {
-	sha := "d7283480bb6dc90be621252e1001a93871dcf511"
-	commitShaHex, err := hex.DecodeString(sha)
-	assert.Nil(t, err)
-
-	var buf bytes.Buffer
-
-	zw := zlib.NewWriter(&buf)
-	fmt.Fprintf(zw, "commit 173\x00")
-	fmt.Fprintf(zw, "tree fcb545d5746547a597811b7441ed8eba307be1ff\n")
-	fmt.Fprintf(zw, "author Taylor Blau <me@ttaylorr.com> 1494620424 -0600\n")
-	fmt.Fprintf(zw, "committer Taylor Blau <me@ttaylorr.com> 1494620424 -0600\n")
-	fmt.Fprintf(zw, "\ninitial commit\n")
-	zw.Close()
-
-	b, err := NewMemoryBackend(map[string]io.ReadWriter{
-		sha: &buf,
-	})
-	require.NoError(t, err)
-
-	odb, err := FromBackend(b)
-	require.NoError(t, err)
-
-	commit, err := odb.Commit(commitShaHex)
-
-	assert.Nil(t, err)
-	assert.Equal(t, "Taylor Blau <me@ttaylorr.com> 1494620424 -0600", commit.Author)
-	assert.Equal(t, "Taylor Blau <me@ttaylorr.com> 1494620424 -0600", commit.Committer)
-	assert.Equal(t, "initial commit", commit.Message)
-	assert.Equal(t, 0, len(commit.ParentIDs))
-	assert.Equal(t, "fcb545d5746547a597811b7441ed8eba307be1ff", hex.EncodeToString(commit.TreeID))
-}
-
-func TestWriteBlob(t *testing.T) {
-	b, err := NewMemoryBackend(nil)
-	require.NoError(t, err)
-
-	odb, err := FromBackend(b)
-	require.NoError(t, err)
-
-	sha, err := odb.WriteBlob(&Blob{
-		Size:     14,
-		Contents: strings.NewReader("Hello, world!\n"),
-	})
-
-	expected := "af5626b4a114abcb82d63db7c8082c3c4756e51b"
-
-	_, s := b.Storage()
-
-	assert.Nil(t, err)
-	assert.Equal(t, expected, hex.EncodeToString(sha))
-	assert.NotNil(t, s.(*memoryStorer).fs[hex.EncodeToString(sha)])
-}
-
-func TestWriteTree(t *testing.T) {
-	b, err := NewMemoryBackend(nil)
-	require.NoError(t, err)
-
-	odb, err := FromBackend(b)
-	require.NoError(t, err)
-
-	blobSha := "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
-	hexBlobSha, err := hex.DecodeString(blobSha)
-	require.Nil(t, err)
-
-	sha, err := odb.WriteTree(&Tree{Entries: []*TreeEntry{
+	testCases := []struct {
+		options []Option
+		size    int64
+		treeSha string
+		blobSha string
+	}{
 		{
+			[]Option{},
+			37,
+			"fcb545d5746547a597811b7441ed8eba307be1ff",
+			"e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+		},
+		{
+			[]Option{ObjectFormat(ObjectFormatSHA256)},
+			49,
+			"eeea12da3c10b7ff20f96530ca613674f0b3292cb524c1b317b80e045adde0b6",
+			"473a0f4c3be8a93681a267e3b1e9a7dcda1185436fe141f7749120a303721813",
+		},
+	}
+
+	for _, test := range testCases {
+		hexSha, err := hex.DecodeString(test.treeSha)
+		require.Nil(t, err)
+
+		hexBlobSha, err := hex.DecodeString(test.blobSha)
+		require.Nil(t, err)
+
+		var buf bytes.Buffer
+
+		zw := zlib.NewWriter(&buf)
+		fmt.Fprintf(zw, "tree %d\x00", test.size)
+		fmt.Fprintf(zw, "100644 hello.txt\x00")
+		zw.Write(hexBlobSha)
+		zw.Close()
+
+		b, err := NewMemoryBackend(map[string]io.ReadWriter{
+			test.treeSha: &buf,
+		})
+		require.NoError(t, err)
+
+		odb, err := FromBackend(b, test.options...)
+		require.NoError(t, err)
+
+		tree, err := odb.Tree(hexSha)
+
+		assert.Nil(t, err)
+		require.Equal(t, 1, len(tree.Entries))
+		assert.Equal(t, &TreeEntry{
 			Name:     "hello.txt",
 			Oid:      hexBlobSha,
 			Filemode: 0100644,
+		}, tree.Entries[0])
+	}
+}
+
+func TestDecodeCommit(t *testing.T) {
+	testCases := []struct {
+		options   []Option
+		size      int64
+		treeSha   string
+		commitSha string
+	}{
+		{
+			[]Option{},
+			173,
+			"fcb545d5746547a597811b7441ed8eba307be1ff",
+			"d7283480bb6dc90be621252e1001a93871dcf511",
 		},
-	}})
+		{
+			[]Option{ObjectFormat(ObjectFormatSHA256)},
+			197,
+			"eeea12da3c10b7ff20f96530ca613674f0b3292cb524c1b317b80e045adde0b6",
+			"9b03a791a98a2c35621ea6870061fb17299b22e2bb5e9f6a7d5afd7dc0c23915",
+		},
+	}
 
-	expected := "fcb545d5746547a597811b7441ed8eba307be1ff"
+	for _, test := range testCases {
+		commitShaHex, err := hex.DecodeString(test.commitSha)
+		assert.Nil(t, err)
 
-	_, s := b.Storage()
+		var buf bytes.Buffer
 
-	assert.Nil(t, err)
-	assert.Equal(t, expected, hex.EncodeToString(sha))
-	assert.NotNil(t, s.(*memoryStorer).fs[hex.EncodeToString(sha)])
+		zw := zlib.NewWriter(&buf)
+		fmt.Fprintf(zw, "commit %d\x00", test.size)
+		fmt.Fprintf(zw, "tree %s\n", test.treeSha)
+		fmt.Fprintf(zw, "author Taylor Blau <me@ttaylorr.com> 1494620424 -0600\n")
+		fmt.Fprintf(zw, "committer Taylor Blau <me@ttaylorr.com> 1494620424 -0600\n")
+		fmt.Fprintf(zw, "\ninitial commit\n")
+		zw.Close()
+
+		b, err := NewMemoryBackend(map[string]io.ReadWriter{
+			test.commitSha: &buf,
+		})
+		require.NoError(t, err)
+
+		odb, err := FromBackend(b, test.options...)
+		require.NoError(t, err)
+
+		commit, err := odb.Commit(commitShaHex)
+
+		assert.Nil(t, err)
+		assert.Equal(t, "Taylor Blau <me@ttaylorr.com> 1494620424 -0600", commit.Author)
+		assert.Equal(t, "Taylor Blau <me@ttaylorr.com> 1494620424 -0600", commit.Committer)
+		assert.Equal(t, "initial commit", commit.Message)
+		assert.Equal(t, 0, len(commit.ParentIDs))
+		assert.Equal(t, test.treeSha, hex.EncodeToString(commit.TreeID))
+	}
+}
+
+func TestWriteBlob(t *testing.T) {
+	testCases := []struct {
+		options []Option
+		sha     string
+	}{
+		{
+			[]Option{}, "af5626b4a114abcb82d63db7c8082c3c4756e51b",
+		},
+		{
+			[]Option{ObjectFormat(ObjectFormatSHA256)}, "7506cbcf4c572be9e06a1fed35ac5b1df8b5a74d26c07f022648e5d95a9f6f2a",
+		},
+	}
+
+	for _, test := range testCases {
+		b, err := NewMemoryBackend(nil)
+		require.NoError(t, err)
+
+		odb, err := FromBackend(b, test.options...)
+		require.NoError(t, err)
+
+		sha, err := odb.WriteBlob(&Blob{
+			Size:     14,
+			Contents: strings.NewReader("Hello, world!\n"),
+		})
+
+		_, s := b.Storage()
+
+		assert.Nil(t, err)
+		assert.Equal(t, test.sha, hex.EncodeToString(sha))
+		assert.NotNil(t, s.(*memoryStorer).fs[hex.EncodeToString(sha)])
+	}
+}
+
+func TestWriteTree(t *testing.T) {
+	testCases := []struct {
+		options []Option
+		treeSha string
+		blobSha string
+	}{
+		{
+			[]Option{},
+			"fcb545d5746547a597811b7441ed8eba307be1ff",
+			"e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+		},
+		{
+			[]Option{ObjectFormat(ObjectFormatSHA256)},
+			"eeea12da3c10b7ff20f96530ca613674f0b3292cb524c1b317b80e045adde0b6",
+			"473a0f4c3be8a93681a267e3b1e9a7dcda1185436fe141f7749120a303721813",
+		},
+	}
+
+	for _, test := range testCases {
+		b, err := NewMemoryBackend(nil)
+		require.NoError(t, err)
+
+		odb, err := FromBackend(b, test.options...)
+		require.NoError(t, err)
+
+		hexBlobSha, err := hex.DecodeString(test.blobSha)
+		require.Nil(t, err)
+
+		sha, err := odb.WriteTree(&Tree{Entries: []*TreeEntry{
+			{
+				Name:     "hello.txt",
+				Oid:      hexBlobSha,
+				Filemode: 0100644,
+			},
+		}})
+
+		_, s := b.Storage()
+
+		assert.Nil(t, err)
+		assert.Equal(t, test.treeSha, hex.EncodeToString(sha))
+		assert.NotNil(t, s.(*memoryStorer).fs[hex.EncodeToString(sha)])
+	}
 }
 
 func TestWriteCommit(t *testing.T) {
-	b, err := NewMemoryBackend(nil)
-	require.NoError(t, err)
+	testCases := []struct {
+		options   []Option
+		treeSha   string
+		commitSha string
+	}{
+		{
+			[]Option{},
+			"fcb545d5746547a597811b7441ed8eba307be1ff",
+			"fee8a35c2890cd6e0e28d24cc457fcecbd460962",
+		},
+		{
+			[]Option{ObjectFormat(ObjectFormatSHA256)},
+			"eeea12da3c10b7ff20f96530ca613674f0b3292cb524c1b317b80e045adde0b6",
+			"fcafabe9e00f4e1375b2ba688edf30b96afe7a20c6176fefbc3f371b298f69d6",
+		},
+	}
 
-	odb, err := FromBackend(b)
-	require.NoError(t, err)
+	for _, test := range testCases {
+		b, err := NewMemoryBackend(nil)
+		require.NoError(t, err)
 
-	when := time.Unix(1257894000, 0).UTC()
-	author := &Signature{Name: "John Doe", Email: "john@example.com", When: when}
-	committer := &Signature{Name: "Jane Doe", Email: "jane@example.com", When: when}
+		odb, err := FromBackend(b, test.options...)
+		require.NoError(t, err)
 
-	tree := "fcb545d5746547a597811b7441ed8eba307be1ff"
-	treeHex, err := hex.DecodeString(tree)
-	assert.Nil(t, err)
+		when := time.Unix(1257894000, 0).UTC()
+		author := &Signature{Name: "John Doe", Email: "john@example.com", When: when}
+		committer := &Signature{Name: "Jane Doe", Email: "jane@example.com", When: when}
 
-	sha, err := odb.WriteCommit(&Commit{
-		Author:    author.String(),
-		Committer: committer.String(),
-		TreeID:    treeHex,
-		Message:   "initial commit",
-	})
+		treeHex, err := hex.DecodeString(test.treeSha)
+		assert.Nil(t, err)
 
-	expected := "fee8a35c2890cd6e0e28d24cc457fcecbd460962"
+		sha, err := odb.WriteCommit(&Commit{
+			Author:    author.String(),
+			Committer: committer.String(),
+			TreeID:    treeHex,
+			Message:   "initial commit",
+		})
 
-	_, s := b.Storage()
+		_, s := b.Storage()
 
-	assert.Nil(t, err)
-	assert.Equal(t, expected, hex.EncodeToString(sha))
-	assert.NotNil(t, s.(*memoryStorer).fs[hex.EncodeToString(sha)])
+		assert.Nil(t, err)
+		assert.Equal(t, test.commitSha, hex.EncodeToString(sha))
+		assert.NotNil(t, s.(*memoryStorer).fs[hex.EncodeToString(sha)])
+	}
 }
 
 func TestWriteCommitWithGPGSignature(t *testing.T) {
@@ -270,6 +382,7 @@ func TestWriteCommitWithGPGSignature(t *testing.T) {
 
 	commit := new(Commit)
 	_, err = commit.Decode(
+		sha1.New(),
 		strings.NewReader(roundTripCommit), int64(len(roundTripCommit)))
 	require.NoError(t, err)
 
@@ -319,28 +432,45 @@ func TestDecodeTag(t *testing.T) {
 }
 
 func TestWriteTag(t *testing.T) {
-	b, err := NewMemoryBackend(nil)
-	require.NoError(t, err)
+	testCases := []struct {
+		options   []Option
+		tagSha    string
+		commitSha []byte
+	}{
+		{
+			[]Option{},
+			"e614dda21829f4176d3db27fe62fb4aee2e2475d",
+			[]byte("aaaaaaaaaaaaaaaaaaaa"),
+		},
+		{
+			[]Option{ObjectFormat(ObjectFormatSHA256)},
+			"a297d8b92e8be21fbe1c96a64acc596f26c8b204eb291c71e371c832d3584651",
+			[]byte("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+		},
+	}
 
-	odb, err := FromBackend(b)
-	require.NoError(t, err)
+	for _, test := range testCases {
+		b, err := NewMemoryBackend(nil)
+		require.NoError(t, err)
 
-	sha, err := odb.WriteTag(&Tag{
-		Object:     []byte("aaaaaaaaaaaaaaaaaaaa"),
-		ObjectType: CommitObjectType,
-		Name:       "v2.4.0",
-		Tagger:     "A U Thor <author@example.com>",
+		odb, err := FromBackend(b, test.options...)
+		require.NoError(t, err)
 
-		Message: "The quick brown fox jumps over the lazy dog.",
-	})
+		sha, err := odb.WriteTag(&Tag{
+			Object:     test.commitSha,
+			ObjectType: CommitObjectType,
+			Name:       "v2.4.0",
+			Tagger:     "A U Thor <author@example.com>",
 
-	expected := "e614dda21829f4176d3db27fe62fb4aee2e2475d"
+			Message: "The quick brown fox jumps over the lazy dog.",
+		})
 
-	_, s := b.Storage()
+		_, s := b.Storage()
 
-	assert.Nil(t, err)
-	assert.Equal(t, expected, hex.EncodeToString(sha))
-	assert.NotNil(t, s.(*memoryStorer).fs[hex.EncodeToString(sha)])
+		assert.Nil(t, err)
+		assert.Equal(t, test.tagSha, hex.EncodeToString(sha))
+		assert.NotNil(t, s.(*memoryStorer).fs[hex.EncodeToString(sha)])
+	}
 }
 
 func TestReadingAMissingObjectAfterClose(t *testing.T) {

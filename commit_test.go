@@ -2,6 +2,7 @@ package gitobj
 
 import (
 	"bytes"
+	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -77,7 +78,7 @@ func TestCommitDecoding(t *testing.T) {
 	flen := from.Len()
 
 	commit := new(Commit)
-	n, err := commit.Decode(from, int64(flen))
+	n, err := commit.Decode(sha1.New(), from, int64(flen))
 
 	assert.Nil(t, err)
 	assert.Equal(t, flen, n)
@@ -107,7 +108,7 @@ func TestCommitDecodingWithEmptyName(t *testing.T) {
 	flen := from.Len()
 
 	commit := new(Commit)
-	n, err := commit.Decode(from, int64(flen))
+	n, err := commit.Decode(sha1.New(), from, int64(flen))
 
 	assert.Nil(t, err)
 	assert.Equal(t, flen, n)
@@ -118,10 +119,10 @@ func TestCommitDecodingWithEmptyName(t *testing.T) {
 }
 
 func TestCommitDecodingWithLargeCommitMessage(t *testing.T) {
-	message := "This message text is, with newline, exactly 64 characters long. ";
+	message := "This message text is, with newline, exactly 64 characters long. "
 	// This message will be exactly 1 MiB in size when part of the commit.
-	longMessage := strings.Repeat(message, (1024 * 1024 / 64) - 1)
-	longMessage += strings.TrimSpace(message);
+	longMessage := strings.Repeat(message, (1024*1024/64)-1)
+	longMessage += strings.TrimSpace(message)
 
 	author := &Signature{Name: "", Email: "john@example.com", When: time.Now()}
 	committer := &Signature{Name: "", Email: "jane@example.com", When: time.Now()}
@@ -138,7 +139,7 @@ func TestCommitDecodingWithLargeCommitMessage(t *testing.T) {
 	flen := from.Len()
 
 	commit := new(Commit)
-	n, err := commit.Decode(from, int64(flen))
+	n, err := commit.Decode(sha1.New(), from, int64(flen))
 
 	assert.Nil(t, err)
 	assert.Equal(t, flen, n)
@@ -164,7 +165,7 @@ func TestCommitDecodingWithMessageKeywordPrefix(t *testing.T) {
 	flen := from.Len()
 
 	commit := new(Commit)
-	n, err := commit.Decode(from, int64(flen))
+	n, err := commit.Decode(sha1.New(), from, int64(flen))
 
 	assert.NoError(t, err)
 	assert.Equal(t, flen, n)
@@ -191,7 +192,7 @@ func TestCommitDecodingWithWhitespace(t *testing.T) {
 	flen := from.Len()
 
 	commit := new(Commit)
-	n, err := commit.Decode(from, int64(flen))
+	n, err := commit.Decode(sha1.New(), from, int64(flen))
 
 	assert.NoError(t, err)
 	assert.Equal(t, flen, n)
@@ -221,7 +222,7 @@ func TestCommitDecodingMultilineHeader(t *testing.T) {
 	flen := from.Len()
 
 	commit := new(Commit)
-	n, err := commit.Decode(from, int64(flen))
+	n, err := commit.Decode(sha1.New(), from, int64(flen))
 
 	require.Nil(t, err)
 	require.Equal(t, flen, n)

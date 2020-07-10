@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/git-lfs/gitobj/errors"
+	"github.com/git-lfs/gitobj/v2/errors"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -2,6 +2,7 @@ package pack
 
 import (
 	"bytes"
+	"crypto/sha1"
 	"encoding/binary"
 	"fmt"
 	"testing"
@@ -165,7 +166,7 @@ func init() {
 		fanout: fanout,
 		// version is unimportant here, use V2 since it's more common in
 		// the wild.
-		version: new(V2),
+		version: &V2{hash: sha1.New()},
 
 		// *bytes.Buffer does not implement io.ReaderAt, but
 		// *bytes.Reader does.

@@ -2,6 +2,7 @@ package pack
 
 import (
 	"bytes"
+	"crypto/sha1"
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
@@ -30,6 +31,7 @@ func TestPackObjectReturnsObjectWithSingleBaseAtLowOffset(t *testing.T) {
 			// (0001 1000) (msb=0, type=commit, size=14)
 			0x1e}, compressed...),
 		),
+		hash: sha1.New(),
 	}
 
 	o, err := p.Object(DecodeHex(t, "cccccccccccccccccccccccccccccccccccccccc"))
@@ -63,6 +65,7 @@ func TestPackObjectReturnsObjectWithSingleBaseAtHighOffset(t *testing.T) {
 
 			compressed...,
 		)),
+		hash: sha1.New(),
 	}
 
 	o, err := p.Object(DecodeHex(t, "cccccccccccccccccccccccccccccccccccccccc"))
@@ -108,6 +111,7 @@ func TestPackObjectReturnsObjectWithDeltaBaseOffset(t *testing.T) {
 			0x6e, // (0110 1010) (msb=0, type=obj_ofs_delta, size=10)
 			0x12, // (0001 0001) (ofs_delta=-17, len(compressed))
 		}, delta...)...)),
+		hash: sha1.New(),
 	}
 
 	o, err := p.Object(DecodeHex(t, "cccccccccccccccccccccccccccccccccccccccc"))
@@ -160,6 +164,7 @@ func TestPackfileObjectReturnsObjectWithDeltaBaseReference(t *testing.T) {
 			0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc,
 			0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc,
 		}, delta...)...)),
+		hash: sha1.New(),
 	}
 
 	o, err := p.Object(DecodeHex(t, "dddddddddddddddddddddddddddddddddddddddd"))
@@ -261,7 +266,7 @@ func IndexWith(offsets map[string]uint32) *Index {
 		fanout: fanout,
 		r:      bytes.NewReader(buf),
 
-		version: new(V2),
+		version: &V2{hash: sha1.New()},
 	}
 }
 

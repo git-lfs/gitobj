@@ -3,6 +3,7 @@ package gitobj
 import (
 	"bufio"
 	"bytes"
+	"crypto/sha1"
 	"fmt"
 	"sort"
 	"strconv"
@@ -68,7 +69,7 @@ func TestTreeDecoding(t *testing.T) {
 	flen := from.Len()
 
 	tree := new(Tree)
-	n, err := tree.Decode(from, int64(flen))
+	n, err := tree.Decode(sha1.New(), from, int64(flen))
 
 	assert.Nil(t, err)
 	assert.Equal(t, flen, n)
@@ -106,7 +107,7 @@ func TestTreeDecodingShaBoundary(t *testing.T) {
 	flen := from.Len()
 
 	tree := new(Tree)
-	n, err := tree.Decode(bufio.NewReaderSize(&from, flen-2), int64(flen))
+	n, err := tree.Decode(sha1.New(), bufio.NewReaderSize(&from, flen-2), int64(flen))
 
 	assert.Nil(t, err)
 	assert.Equal(t, flen, n)

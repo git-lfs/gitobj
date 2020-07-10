@@ -2,6 +2,8 @@ package pack
 
 import (
 	"bytes"
+	"crypto/sha1"
+	"crypto/sha256"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,7 +14,7 @@ func TestDecodePackfileDecodesIntegerVersion(t *testing.T) {
 		'P', 'A', 'C', 'K', // Pack header.
 		0x0, 0x0, 0x0, 0x2, // Pack version.
 		0x0, 0x0, 0x0, 0x0, // Number of packed objects.
-	}))
+	}), sha1.New())
 
 	assert.NoError(t, err)
 	assert.EqualValues(t, 2, p.Version)
@@ -23,7 +25,7 @@ func TestDecodePackfileDecodesIntegerCount(t *testing.T) {
 		'P', 'A', 'C', 'K', // Pack header.
 		0x0, 0x0, 0x0, 0x2, // Pack version.
 		0x0, 0x0, 0x1, 0x2, // Number of packed objects.
-	}))
+	}), sha256.New())
 
 	assert.NoError(t, err)
 	assert.EqualValues(t, 258, p.Objects)
@@ -34,7 +36,7 @@ func TestDecodePackfileReportsBadHeaders(t *testing.T) {
 		'W', 'R', 'O', 'N', 'G', // Malformed pack header.
 		0x0, 0x0, 0x0, 0x0, // Pack version.
 		0x0, 0x0, 0x0, 0x0, // Number of packed objects.
-	}))
+	}), sha1.New())
 
 	assert.Equal(t, errBadPackHeader, err)
 	assert.Nil(t, p)

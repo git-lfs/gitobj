@@ -2,6 +2,7 @@ package gitobj
 
 import (
 	"bytes"
+	"crypto/sha1"
 	"errors"
 	"io/ioutil"
 	"strings"
@@ -48,7 +49,7 @@ func TestBlobDecoding(t *testing.T) {
 	from := strings.NewReader(contents)
 
 	b := new(Blob)
-	n, err := b.Decode(from, int64(len(contents)))
+	n, err := b.Decode(sha1.New(), from, int64(len(contents)))
 
 	assert.Equal(t, 0, n)
 	assert.Nil(t, err)
