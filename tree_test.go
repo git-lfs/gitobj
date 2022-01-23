@@ -157,6 +157,7 @@ func TestMergeInsertElementsInSubtreeOrder(t *testing.T) {
 	assert.True(t, bytes.Equal(t1.Entries[1].Oid, []byte{0x2}))
 	assert.True(t, bytes.Equal(t1.Entries[2].Oid, []byte{0x3}))
 
+	require.Len(t, t2.Entries, 4)
 	assert.True(t, bytes.Equal(t2.Entries[0].Oid, []byte{0x4}))
 	assert.True(t, bytes.Equal(t2.Entries[1].Oid, []byte{0x1}))
 	assert.True(t, bytes.Equal(t2.Entries[2].Oid, []byte{0x2}))
