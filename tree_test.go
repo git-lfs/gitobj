@@ -167,9 +167,10 @@ func TestMergeInsertElementsInSubtreeOrder(t *testing.T) {
 type TreeEntryTypeTestCase struct {
 	Filemode int32
 	Expected ObjectType
+	IsLink bool
 }
 
-func (c *TreeEntryTypeTestCase) Assert(t *testing.T) {
+func (c *TreeEntryTypeTestCase) AssertType(t *testing.T) {
 	e := &TreeEntry{Filemode: c.Filemode}
 
 	got := e.Type()
@@ -178,14 +179,24 @@ func (c *TreeEntryTypeTestCase) Assert(t *testing.T) {
 		"gitobj: expected type: %s, got: %s", c.Expected, got)
 }
 
+func (c *TreeEntryTypeTestCase) AssertIsLink(t *testing.T) {
+	e := &TreeEntry{Filemode: c.Filemode}
+
+	isLink := e.IsLink()
+
+	assert.Equal(t, c.IsLink, isLink,
+		"gitobj: expected link: %v, got: %v, for type %s", c.IsLink, isLink, c.Expected)
+}
+
 func TestTreeEntryTypeResolution(t *testing.T) {
 	for desc, c := range map[string]*TreeEntryTypeTestCase{
-		"blob":    {0100644, BlobObjectType},
-		"subtree": {040000, TreeObjectType},
-		"symlink": {0120000, BlobObjectType},
-		"commit":  {0160000, CommitObjectType},
+		"blob":    {0100644, BlobObjectType, false},
+		"subtree": {040000, TreeObjectType, false},
+		"symlink": {0120000, BlobObjectType, true},
+		"commit":  {0160000, CommitObjectType, false},
 	} {
-		t.Run(desc, c.Assert)
+		t.Run(desc, c.AssertType)
+		t.Run(desc, c.AssertIsLink)
 	}
 }
 
