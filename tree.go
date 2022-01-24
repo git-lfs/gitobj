@@ -115,22 +115,18 @@ func (t *Tree) Encode(to io.Writer) (n int, err error) {
 func (t *Tree) Merge(others ...*TreeEntry) *Tree {
 	unseen := make(map[string]*TreeEntry)
 
-	// Build a cache of name+filemode to *TreeEntry.
+	// Build a cache of name to *TreeEntry.
 	for _, other := range others {
-		key := fmt.Sprintf("%s\x00%o", other.Name, other.Filemode)
-
-		unseen[key] = other
+		unseen[other.Name] = other
 	}
 
 	// Map the existing entries ("t.Entries") into a new set by either
 	// copying an existing entry, or replacing it with a new one.
 	entries := make([]*TreeEntry, 0, len(t.Entries))
 	for _, entry := range t.Entries {
-		key := fmt.Sprintf("%s\x00%o", entry.Name, entry.Filemode)
-
-		if other, ok := unseen[key]; ok {
+		if other, ok := unseen[entry.Name]; ok {
 			entries = append(entries, other)
-			delete(unseen, key)
+			delete(unseen, entry.Name)
 		} else {
 			oid := make([]byte, len(entry.Oid))
 			copy(oid, entry.Oid)

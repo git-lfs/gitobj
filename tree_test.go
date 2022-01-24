@@ -123,7 +123,7 @@ func TestTreeDecodingShaBoundary(t *testing.T) {
 func TestTreeMergeReplaceElements(t *testing.T) {
 	e1 := &TreeEntry{Name: "a", Filemode: 0100644, Oid: []byte{0x1}}
 	e2 := &TreeEntry{Name: "b", Filemode: 0100644, Oid: []byte{0x2}}
-	e3 := &TreeEntry{Name: "c", Filemode: 0100644, Oid: []byte{0x3}}
+	e3 := &TreeEntry{Name: "c", Filemode: 0100755, Oid: []byte{0x3}}
 
 	e4 := &TreeEntry{Name: "b", Filemode: 0100644, Oid: []byte{0x4}}
 	e5 := &TreeEntry{Name: "c", Filemode: 0100644, Oid: []byte{0x5}}
@@ -157,6 +157,7 @@ func TestMergeInsertElementsInSubtreeOrder(t *testing.T) {
 	assert.True(t, bytes.Equal(t1.Entries[1].Oid, []byte{0x2}))
 	assert.True(t, bytes.Equal(t1.Entries[2].Oid, []byte{0x3}))
 
+	require.Len(t, t2.Entries, 4)
 	assert.True(t, bytes.Equal(t2.Entries[0].Oid, []byte{0x4}))
 	assert.True(t, bytes.Equal(t2.Entries[1].Oid, []byte{0x1}))
 	assert.True(t, bytes.Equal(t2.Entries[2].Oid, []byte{0x2}))
