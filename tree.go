@@ -234,6 +234,12 @@ func (e *TreeEntry) Type() ObjectType {
 	}
 }
 
+// IsLink returns true if the given TreeEntry is a blob which represents a
+// symbolic link (i.e., with a filemode of 0120000.
+func (e *TreeEntry) IsLink() bool {
+	return e.Filemode & sIFMT == sIFLNK
+}
+
 // SubtreeOrder is an implementation of sort.Interface that sorts a set of
 // `*TreeEntry`'s according to "subtree" order. This ordering is required to
 // write trees in a correct, readable format to the Git object database.
