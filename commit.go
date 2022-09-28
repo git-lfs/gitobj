@@ -107,7 +107,7 @@ func (c *Commit) Decode(hash hash.Hash, from io.Reader, size int64) (n int, err 
 			continue
 		}
 
-		if fields := strings.Fields(text); !finishedHeaders {
+		if fields := strings.Split(text, " "); !finishedHeaders {
 			if len(fields) == 0 {
 				// Executing in this block means that we got a
 				// whitespace-only line, while parsing a header.
