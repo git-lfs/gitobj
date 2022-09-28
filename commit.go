@@ -123,13 +123,13 @@ func (c *Commit) Decode(hash hash.Hash, from io.Reader, size int64) (n int, err 
 			case "tree":
 				id, err := hex.DecodeString(fields[1])
 				if err != nil {
-					return n, err
+					return n, fmt.Errorf("error parsing tree: %s", err)
 				}
 				c.TreeID = id
 			case "parent":
 				id, err := hex.DecodeString(fields[1])
 				if err != nil {
-					return n, err
+					return n, fmt.Errorf("error parsing parent: %s", err)
 				}
 				c.ParentIDs = append(c.ParentIDs, id)
 			case "author":
