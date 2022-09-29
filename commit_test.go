@@ -238,6 +238,65 @@ func TestCommitDecodingMultilineHeader(t *testing.T) {
 		strings.Split(hdr.V, "\n"))
 }
 
+func TestCommitDecodingMessageWithLineStartingWithTree(t *testing.T) {
+	from := new(bytes.Buffer)
+
+	// The tricky part here that we're testing is the "tree support" in the
+	// `mergetag` header, which we should not try to parse as a tree header.
+	// Note also that this entry contains trailing whitespace which must not
+	// be trimmed.
+	fmt.Fprintf(from, `tree e8ad84c41c2acde27c77fa212b8865cd3acfe6fb
+parent b343c8beec664ef6f0e9964d3001c7c7966331ae
+parent 1e8a52e18cfb381bc9cc1f0b720540364d2a6edd
+author Pat Doe <pdoe@example.org> 1337892984 -0700
+committer Pat Doe <pdoe@example.org> 1337892984 -0700
+mergetag object 1e8a52e18cfb381bc9cc1f0b720540364d2a6edd
+ type commit
+ tag random
+ tagger J. Roe <jroe@example.ca> 1337889148 -0600
+ 
+ Random changes
+ 
+ This text contains some
+ tree support code.
+ -----BEGIN PGP SIGNATURE-----
+ Version: GnuPG v1.4.11 (GNU/Linux)
+ 
+ Not a real signature
+ -----END PGP SIGNATURE-----
+
+Merge tag 'random' of git://git.example.ca/git/
+`)
+
+	flen := from.Len()
+
+	commit := new(Commit)
+	n, err := commit.Decode(sha1.New(), from, int64(flen))
+
+	require.Nil(t, err)
+	require.Equal(t, flen, n)
+	require.Equal(t, commit.ExtraHeaders, []*ExtraHeader{
+		{
+			K: "mergetag",
+			V: `object 1e8a52e18cfb381bc9cc1f0b720540364d2a6edd
+type commit
+tag random
+tagger J. Roe <jroe@example.ca> 1337889148 -0600
+
+Random changes
+
+This text contains some
+tree support code.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.11 (GNU/Linux)
+
+Not a real signature
+-----END PGP SIGNATURE-----`},
+	},
+	)
+	require.Equal(t, commit.Message, "Merge tag 'random' of git://git.example.ca/git/")
+}
+
 func assertLine(t *testing.T, buf *bytes.Buffer, wanted string, args ...interface{}) {
 	got, err := buf.ReadString('\n')
 	if err == io.EOF {
