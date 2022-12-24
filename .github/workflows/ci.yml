@@ -6,7 +6,7 @@ jobs:
     name: Default build
     strategy:
       matrix:
-        go: ['1.12.x', '1.13.x', '1.14.x']
+        go: ['1.18.x', '1.19.x']
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
