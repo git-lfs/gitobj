@@ -1,6 +1,8 @@
 # gitobj
 
-[![](https://travis-ci.org/git-lfs/gitobj.svg?branch=master)](https://travis-ci.org/git-lfs/gitobj) [![](https://godoc.org/github.com/git-lfs/gitobj?status.svg)](https://godoc.org/github.com/git-lfs/gitobj)
+![CI status][1]
+
+[1]: https://github.com/git-lfs/gitobj/workflows/CI/badge.svg
 
 Package `gitobj` reads and writes loose and packed Git objects.
 
