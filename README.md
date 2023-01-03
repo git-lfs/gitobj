@@ -1,8 +1,9 @@
 # gitobj
 
-![CI status][1]
+[![CI status][ci_badge]][ci_url]
 
-[1]: https://github.com/git-lfs/gitobj/workflows/CI/badge.svg
+[ci_badge]: https://github.com/git-lfs/gitobj/workflows/CI/badge.svg
+[ci_url]: https://github.com/git-lfs/gitobj/actions?query=workflow%3ACI
 
 Package `gitobj` reads and writes loose and packed Git objects.
 
