@@ -1,12 +1,14 @@
 name: CI
 on: [push, pull_request]
+env:
+  GOTOOLCHAIN: local
 
 jobs:
   build-go:
     name: Default build
     strategy:
       matrix:
-        go: ['1.18.x', '1.19.x']
+        go: ['1.20.x', '1.21.x']
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
