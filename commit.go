@@ -145,7 +145,7 @@ func (c *Commit) Decode(hash hash.Hash, from io.Reader, size int64) (n int, err 
 					c.Committer = ""
 				}
 			default:
-				if strings.HasPrefix(s.Text(), " ") {
+				if strings.HasPrefix(text, " ") && len(c.ExtraHeaders) > 0 {
 					idx := len(c.ExtraHeaders) - 1
 					hdr := c.ExtraHeaders[idx]
 
