@@ -455,3 +455,17 @@ func TestCommitEqualReturnsTrueWhenBothCommitsAreNil(t *testing.T) {
 
 	assert.True(t, c1.Equal(c2))
 }
+
+func TestCommitInvalidMultilineNonExtraHeader(t *testing.T) {
+	cc := `tree 2aedfd35087c75d17bdbaf4dd56069d44fc75b71
+parent 75158117eb8efe60453f8c077527ac3530c81e38
+author Jane Doe <jane@example.com> 1503956287 -0400
+committer Jane Doe <jane@example.com> 1503956287 -0400
+ foo bar
+
+initial commit`
+
+	var c Commit
+	_, err := c.Decode(sha1.New(), strings.NewReader(cc), int64(len(cc)))
+	assert.NoError(t, err)
+}
