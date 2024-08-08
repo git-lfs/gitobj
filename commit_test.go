@@ -456,14 +456,15 @@ func TestCommitEqualReturnsTrueWhenBothCommitsAreNil(t *testing.T) {
 	assert.True(t, c1.Equal(c2))
 }
 
-func TestBadCommit(t *testing.T) {
+func TestCommitInvalidMultilineNonExtraHeader(t *testing.T) {
 	cc := `tree 2aedfd35087c75d17bdbaf4dd56069d44fc75b71
 parent 75158117eb8efe60453f8c077527ac3530c81e38
-author Credit Card Account <Credit Card Account> 1722305889 +0800
-committer \346\244\260\346\235\215
- <Credit Card Account> 1722305889 +0800
+author Jane Doe <jane@example.com> 1503956287 -0400
+committer Jane Doe <jane@example.com> 1503956287 -0400
+ foo bar
 
-Credit Card Account`
+initial commit`
+
 	var c Commit
 	_, err := c.Decode(sha1.New(), strings.NewReader(cc), int64(len(cc)))
 	assert.NoError(t, err)
