@@ -466,9 +466,5 @@ committer \346\244\260\346\235\215
 Credit Card Account`
 	var c Commit
 	_, err := c.Decode(sha1.New(), strings.NewReader(cc), int64(len(cc)))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "decode error: '%v'\n", err)
-		return
-	}
-	fmt.Fprintf(os.Stderr, "%v\n", c)
+	assert.NoError(t, err)
 }
