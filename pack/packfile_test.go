@@ -108,8 +108,8 @@ func TestPackObjectReturnsObjectWithDeltaBaseOffset(t *testing.T) {
 
 			0x35, // (0011 0101) (msb=0, type=blob, size=5)
 		}, compressed...), append([]byte{
-			0x6e, // (0110 1010) (msb=0, type=obj_ofs_delta, size=10)
-			0x12, // (0001 0001) (ofs_delta=-17, len(compressed))
+			0x6e,                      // (0110 1010) (msb=0, type=obj_ofs_delta, size=10)
+			byte(1 + len(compressed)), // ofs_delta: base header byte + len(compressed)
 		}, delta...)...)),
 		hash: sha1.New(),
 	}
@@ -147,7 +147,7 @@ func TestPackfileObjectReturnsObjectWithDeltaBaseReference(t *testing.T) {
 	p := &Packfile{
 		idx: IndexWith(map[string]uint32{
 			"cccccccccccccccccccccccccccccccccccccccc": 32,
-			"dddddddddddddddddddddddddddddddddddddddd": 52,
+			"dddddddddddddddddddddddddddddddddddddddd": uint32(32 + 1 + len(compressed)),
 		}),
 		r: bytes.NewReader(append(append([]byte{
 			0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
